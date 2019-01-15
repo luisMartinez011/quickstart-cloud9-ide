@@ -1,0 +1,140 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Cloud9 + QuickStart VPC (Workload Template), Apache 2.0 (Please do not remove) Jan,9,2019
+Metadata:
+  LICENSE: |-
+    Copyright 2019 Amazon Web Services
+    Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+    - Label:
+        default: Cloud9 Configuration
+      Parameters:
+      - C9InstanceType
+      - C9StopTime
+      - C9Subnet
+    - Label:
+        default: AWS Quick Start Configuration
+      Parameters:
+        - QSS3BucketName
+        - QSS3KeyPrefix       
+    ParameterLabels:
+      C9InstanceType:
+        default: Cloud9 Instance Type
+      C9StopTime:
+        default: Stop Time
+      C9Subnet:
+        default: Subnet ID
+      QSS3BucketName:
+        default: Quick Start S3 Bucket Name
+      QSS3KeyPrefix:
+        default: Quick Start S3 Key Prefix        
+Parameters:
+  QSS3BucketName:
+    AllowedPattern: '^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$'
+    ConstraintDescription: >-
+      Quick Start bucket name can include numbers, lowercase letters, uppercase
+      letters, and hyphens (-). It cannot start or end with a hyphen (-).
+    Default: aws-quickstart
+    Description: >-
+      S3 bucket name for the Quick Start assets. This string can include
+      numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot
+      start or end with a hyphen (-).
+    Type: String
+  QSS3KeyPrefix:
+    AllowedPattern: '^[0-9a-zA-Z-/]*$'
+    ConstraintDescription: >-
+      Quick Start key prefix can include numbers, lowercase letters, uppercase
+      letters, hyphens (-), and forward slash (/).
+    Default: quickstart-cloud9-ide/
+    Description: >-
+      S3 key prefix for the Quick Start assets. Quick Start key prefix can
+      include numbers, lowercase letters, uppercase letters, hyphens (-), and
+      forward slash (/).
+    Type: String
+  C9InstanceType:
+    Description: The instance type of the new Amazon EC2 instance that AWS Cloud9
+      will launch for the development environment (for example, 't2.micro').
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+    - t2.micro
+    - t2.small
+    - m4.large
+    - t2.nano
+    - c4.large
+    - t2.medium
+    - t2.large
+    - m4.xlarge
+    - t2.xlarge
+    - c4.xlarge
+    - c4.2xlarge
+    - m4.2xlarge
+    - t2.2xlarge
+    - c4.4xlarge
+    - m4.4xlarge
+    - c4.8xlarge
+    - m4.10xlarge
+    - m4.16xlarge
+  C9StopTime:
+    Description: The number of minutes until the running instance is shut down after
+      the environment has last been used.
+    Type: Number
+    Default: 30
+  C9Subnet:
+    Description: Subnet for your Cloud9 instance.
+    Type: String
+Resources:
+  C9Instance:
+    Type: AWS::Cloud9::EnvironmentEC2
+    Properties:
+      Name:
+        Ref: AWS::StackName
+      Description:
+        Fn::Sub: ${AWS::AccountId}-${AWS::Region}-${AWS::StackName}
+      AutomaticStopTimeMinutes:
+        Ref: C9StopTime
+      InstanceType:
+        Ref: C9InstanceType
+      SubnetId:
+        Ref: C9Subnet
+  C9Role:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: ec2.amazonaws.com
+          Action: sts:AssumeRole
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/AdministratorAccess
+  C9InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: /
+      Roles:
+      - Ref: C9Role
+Outputs:
+  C9Instance:
+    Description: Cloud9 Instance Name
+    Value:
+      Ref: C9Instance
+  C9InstanceProfileName:
+    Description: Cloud9 Instance Profile Name
+    Value:
+      Ref: C9InstanceProfile
+  C9InstanceProfileArn:
+    Description: Cloud9 Instance Profile Arn
+    Value:
+      Fn::GetAtt: C9InstanceProfile.Arn
+  IDEStackName:
+    Description: CloudFormation Stack Name
+    Value:
+      Ref: AWS::StackName
+...

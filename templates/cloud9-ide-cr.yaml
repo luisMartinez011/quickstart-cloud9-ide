@@ -1,0 +1,154 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Cloud9 + QuickStart VPC (Workload Template), Apache 2.0 (Please do not remove) Jan,9,2019
+Metadata:
+  LICENSE: |-
+    Copyright 2019 Amazon Web Services
+    Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+    - Label:
+        default: Cloud9 Configuration
+      Parameters:
+      - EBSVolumeSize
+      - EnvironmentId
+      - C9InstanceProfileName
+      - C9InstanceProfileArn
+    - Label:
+        default: AWS Quick Start Configuration
+      Parameters:
+      - QSS3BucketName
+      - QSS3KeyPrefix
+    ParameterLabels:
+      EBSVolumeSize:
+        default: EBS Volume Size
+      EnvironmentId:
+        default: Cloud9 Instance Environment ID
+      C9InstanceProfileName:
+        default: Cloud9 Instance Profile Name  
+      C9InstanceProfileArn:
+        default: Cloud9 Instance Profile ARN
+      QSS3BucketName:
+        default: Quick Start S3 Bucket Name
+      QSS3KeyPrefix:
+        default: Quick Start S3 Key Prefix
+Parameters:
+  QSS3BucketName:
+    AllowedPattern: '^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$'
+    ConstraintDescription: >-
+      Quick Start bucket name can include numbers, lowercase letters, uppercase
+      letters, and hyphens (-). It cannot start or end with a hyphen (-).
+    Default: aws-quickstart
+    Description: >-
+      S3 bucket name for the Quick Start assets. This string can include
+      numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot
+      start or end with a hyphen (-).
+    Type: String
+  QSS3KeyPrefix:
+    AllowedPattern: '^[0-9a-zA-Z-/]*$'
+    ConstraintDescription: >-
+      Quick Start key prefix can include numbers, lowercase letters, uppercase
+      letters, hyphens (-), and forward slash (/).
+    Default: quickstart-cloud9-ide/
+    Description: >-
+      S3 key prefix for the Quick Start assets. Quick Start key prefix can
+      include numbers, lowercase letters, uppercase letters, hyphens (-), and
+      forward slash (/).
+    Type: String
+  EBSVolumeSize:
+    Description: The desired size (GB) of the EBS volume for your Cloud9 IDE.
+    Type: Number
+    Default: 100
+  EnvironmentId:
+    Description: The name of your Cloud9 instance.
+    Type: String
+  C9InstanceProfileName:
+    Description: The name of the Cloud9 instance IAM profile name.
+    Type: String
+  C9InstanceProfileArn:
+    Description: The ARN of the Cloud9 instance IAM profile.
+    Type: String
+Resources:
+  C9InstanceFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: /
+      Policies:
+      - PolicyName: root
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+            Resource: arn:aws:logs:*:*:*
+          - Effect: Allow
+            Action:
+            - cloudformation:DescribeStacks
+            - cloudformation:DescribeStackEvents
+            - cloudformation:DescribeStackResource
+            - cloudformation:DescribeStackResources
+            - ec2:DescribeInstances
+            - ec2:DescribeInstanceStatus
+            - ec2:DescribeInstanceAttribute
+            - ec2:DescribeVolumeStatus
+            - ec2:DesctibeVolumeAttribute
+            - ec2:DescribeTags
+            - ec2:DescribeVolumes
+            - ec2:DescribeVolumesModifications
+            - ec2:AssociateIamInstanceProfile
+            - ec2:ModifyVolume
+            - ec2:ModifyVolumeAttributes
+            - ec2:RebootInstances
+            - ec2:ReplaceIamInstanceProfileAssociation
+            - ec2:ReportInstanceStatus
+            - iam:ListInstanceProfiles
+            - iam:PassRole
+            Resource: '*'
+  C9InstanceFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Handler: setenv.handler
+      Runtime: python3.6
+      Description: Cloud9 Instance Role Function
+      MemorySize: 128
+      Timeout: 900
+      Role:
+        Fn::GetAtt: C9InstanceFunctionRole.Arn
+      Code:
+        S3Bucket:
+          Ref: QSS3BucketName
+        S3Key:
+          Fn::Sub: ${QSS3KeyPrefix}/functions/packages/lambda.zip
+  C9InstanceCR:
+    Type: Custom::C9InstanceFunction
+    Version: '1.0'
+    Properties:
+      ServiceToken:
+        Fn::GetAtt: C9InstanceFunction.Arn
+      EBSVolumeSize:
+        Ref: EBSVolumeSize
+      StackName:
+        Ref: StackName
+      EnvironmentId:
+        Ref: EnvironmentId
+      C9InstanceProfileName:
+        Ref: C9InstanceProfileName
+      C9InstanceProfileArn:
+        Ref: C9InstanceProfileArn
+...
