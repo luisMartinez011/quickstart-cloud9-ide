@@ -22,3 +22,5 @@ tests:
   c9-ide:
     parameter_input: cloud9-ide-master.json
     template_file: cloud9-ide-master.template.yaml
+    regions:
+    - us-east-1
