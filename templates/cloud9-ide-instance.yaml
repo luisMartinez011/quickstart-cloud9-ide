@@ -92,16 +92,11 @@ Resources:
   C9Instance:
     Type: AWS::Cloud9::EnvironmentEC2
     Properties:
-      Name:
-        Ref: AWS::StackName
-      Description:
-        Fn::Sub: ${AWS::AccountId}-${AWS::Region}-${AWS::StackName}
-      AutomaticStopTimeMinutes:
-        Ref: C9StopTime
-      InstanceType:
-        Ref: C9InstanceType
-      SubnetId:
-        Ref: C9Subnet
+      Name: !Ref 'AWS::StackName'
+      Description: !Sub '${AWS::AccountId}-${AWS::Region}-${AWS::StackName}'
+      AutomaticStopTimeMinutes: !Ref 'C9StopTime'
+      InstanceType: !Ref 'C9InstanceType'
+      SubnetId: !Ref 'C9Subnet'
   C9Role:
     Type: AWS::IAM::Role
     Properties:
@@ -123,18 +118,13 @@ Resources:
 Outputs:
   C9Instance:
     Description: Cloud9 Instance Name
-    Value:
-      Ref: C9Instance
+    Value: !Ref 'C9Instance'
   C9InstanceProfileName:
     Description: Cloud9 Instance Profile Name
-    Value:
-      Ref: C9InstanceProfile
+    Value: !Ref 'C9InstanceProfile'
   C9InstanceProfileArn:
     Description: Cloud9 Instance Profile Arn
-    Value:
-      Fn::GetAtt: C9InstanceProfile.Arn
+    Value: !GetAtt 'C9InstanceProfile.Arn'
   IDEStackName:
     Description: CloudFormation Stack Name
-    Value:
-      Ref: AWS::StackName
-...
+    Value: !Ref 'AWS::StackName'
