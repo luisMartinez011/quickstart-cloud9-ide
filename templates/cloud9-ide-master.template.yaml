@@ -139,7 +139,6 @@ Resources:
         PublicSubnet2CIDR: "10.0.144.0/20"
         NumberOfAZs: '2'
   IDEStack:
-    DependsOn: VPCStack
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Sub >-
@@ -147,7 +146,7 @@ Resources:
       Parameters:
         C9InstanceType: !Ref 'C9InstanceType'
         C9StopTime: !Ref 'C9StopTime'
-        C9Subnet: !Ref 'VPCStack.Outputs.PublicSubnet1ID'
+        C9Subnet: !GetAtt 'VPCStack.Outputs.PublicSubnet1ID'
   CRStack:
     Type: AWS::CloudFormation::Stack
     Properties:
