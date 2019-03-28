@@ -87,9 +87,6 @@ Parameters:
     Type: String
     Default: ''    
 Conditions:
-  GovCloudCondition: !Equals
-    - !Ref 'AWS::Region'
-    - us-gov-west-1
   AutoGenOutputBucketName: !Not
     - !Equals
       - !Ref 'OutputBucketName'
@@ -325,27 +322,17 @@ Resources:
       Description: Cloud9 Instance Role Function
       MemorySize: 128
       Timeout: 900
-      Role:
-        Fn::GetAtt: C9InstanceFunctionRole.Arn
+      Role: !GetAtt 'C9InstanceFunctionRole.Arn'
       Code:
-        S3Bucket:
-          Ref: QSS3BucketName
-        S3Key:
-          Fn::Sub: ${QSS3KeyPrefix}functions/packages/extend/lambda.zip
+        S3Bucket: !Ref 'LambdaZipsBucket'
+        S3Key:  !Sub '${QSS3KeyPrefix}functions/packages/extend/lambda.zip'
   C9InstanceCR:
     Type: Custom::C9InstanceFunction
     Version: '1.0'
     Properties:
-      ServiceToken:
-        Fn::GetAtt: C9InstanceFunction.Arn
-      EBSVolumeSize:
-        Ref: EBSVolumeSize
-      StackName:
-        Ref: IDEStackName
-      EnvironmentId:
-        Ref: EnvironmentId
-      C9InstanceProfileName:
-        Ref: C9InstanceProfileName
-      C9InstanceProfileArn:
-        Ref: C9InstanceProfileArn
-...
+      ServiceToken: !GetAtt 'C9InstanceFunction.Arn'
+      EBSVolumeSize: !Ref 'EBSVolumeSize'
+      StackName: !Ref 'IDEStackName'
+      EnvironmentId: !Ref 'EnvironmentId'
+      C9InstanceProfileName: !Ref 'C9InstanceProfileName'
+      C9InstanceProfileArn: !Ref 'C9InstanceProfileArn'
