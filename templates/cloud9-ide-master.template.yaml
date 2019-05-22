@@ -12,40 +12,46 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
     - Label:
-        default: Network Configuration (new VPC)
+        default: VPC network configuration
       Parameters:
       - AvailabilityZones
       - NumberOfAZs
       - RemoteAccessCIDR      
       - KeyPairName      
     - Label:
-        default: Cloud9 Configuration
+        default: Cloud9 configuration
       Parameters:
       - C9InstanceType
       - C9StopTime
       - EBSVolumeSize   
     - Label:
-        default: AWS Quick Start Configuration
+        default: AWS Quick Start configuration
       Parameters:
         - QSS3BucketName
         - QSS3KeyPrefix            
     ParameterLabels:
+      AvailabilityZones:
+        default: Availability Zones
+      RemoteAccessCIDR:
+        default: Remote access CIDR
+      KeyPairName:
+        default: Key pair name
       QSS3BucketName:
-        default: S3 Bucket Name
+        default: S3 bucket name
       QSS3KeyPrefix:
-        default: S3 Key Prefix
+        default: S3 key prefix
       EBSVolumeSize:
-        default: EBS Volume Size
+        default: EBS volume size
       EnvironmentId:
-        default: Cloud9 Instance Environment ID
+        default: Cloud9 instance environment ID
       C9InstanceProfileName:
-        default: Cloud9 Instance Profile Name  
+        default: Cloud9 instance profile name  
       C9InstanceProfileArn:
-        default: Cloud9 Instance Profile ARN
+        default: Cloud9 instance profile ARN
       C9InstanceType:
-        default: Cloud9 Instance Type
+        default: Cloud9 instance type
       C9StopTime:
-        default: Stop Time
+        default: Stop time
       C9Subnet:
         default: Subnet ID
 Parameters:
@@ -58,14 +64,14 @@ Parameters:
   KeyPairName:
     Description: >-
       The name of an existing public/private key pair, which allows you to
-      securely connect to your instance after it launches
+      securely connect to your instance after it launches.
     Type: AWS::EC2::KeyPair::KeyName
   RemoteAccessCIDR:
     AllowedPattern: >-
       ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
     ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/x
     Description: >-
-      The CIDR IP range that is permitted to access the instances We recommend
+      The CIDR IP range that is permitted to access the instances. We recommend
       that you set this value to a trusted IP range.
     Type: String      
   QSS3BucketName:
@@ -92,7 +98,7 @@ Parameters:
     Type: String
   C9InstanceType:
     Description: The instance type of the new Amazon EC2 instance that AWS Cloud9
-      will launch for the development environment (for example, 't2.micro').
+      will launch for the development environment.
     Type: String
     Default: t2.micro
     AllowedValues:
@@ -120,7 +126,7 @@ Parameters:
     Type: Number
     Default: 30
   EBSVolumeSize:
-    Description: The desired size (GB) of the EBS volume for your Cloud9 IDE.
+    Description: The desired size (in GB) of the Amazon EBS volume for your Cloud9 IDE.
     Type: Number
     Default: 100
 Resources: 
