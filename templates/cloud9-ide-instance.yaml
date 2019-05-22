@@ -1,6 +1,6 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Cloud9 + QuickStart VPC (Workload Template), Apache 2.0 (Please do not remove) Jan,9,2019
+Description: Cloud9 + QuickStart VPC (Workload Template) (qs-1pb4pod81)
 Metadata:
   LICENSE: |-
     Copyright 2019 Amazon Web Services
@@ -17,11 +17,12 @@ Metadata:
       - C9InstanceType
       - C9StopTime
       - C9Subnet
+      - EBSVolumeSize           
     - Label:
         default: AWS Quick Start Configuration
       Parameters:
         - QSS3BucketName
-        - QSS3KeyPrefix       
+        - QSS3KeyPrefix         
     ParameterLabels:
       C9InstanceType:
         default: Cloud9 Instance Type
@@ -29,10 +30,12 @@ Metadata:
         default: Stop Time
       C9Subnet:
         default: Subnet ID
+      EBSVolumeSize:
+        default: EBS Volume Size        
       QSS3BucketName:
         default: Quick Start S3 Bucket Name
       QSS3KeyPrefix:
-        default: Quick Start S3 Key Prefix        
+        default: Quick Start S3 Key Prefix               
 Parameters:
   QSS3BucketName:
     AllowedPattern: '^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$'
@@ -88,6 +91,10 @@ Parameters:
   C9Subnet:
     Description: Subnet for your Cloud9 instance.
     Type: String
+  EBSVolumeSize:
+    Description: The desired size (GB) of the EBS volume for your Cloud9 IDE.
+    Type: Number
+    Default: 100        
 Resources:
   C9Instance:
     Type: AWS::Cloud9::EnvironmentEC2
@@ -111,10 +118,23 @@ Resources:
       - arn:aws:iam::aws:policy/AdministratorAccess
   C9InstanceProfile:
     Type: AWS::IAM::InstanceProfile
+    DependsOn: 'C9Instance'
     Properties:
       Path: /
-      Roles:
-      - Ref: C9Role
+      Roles: !Ref: 'C9Role'
+  CRStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub >-
+        https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/cloud9-ide-cr.yaml
+      Parameters:
+        QSS3BucketName: !Ref 'QSS3BucketName'
+        QSS3KeyPrefix: !Ref 'QSS3KeyPrefix'
+        EBSVolumeSize: !Ref 'EBSVolumeSize'
+        EnvironmentId: !Ref 'C9Instance'
+        C9InstanceProfileName: !Ref 'C9InstanceProfile'
+        C9InstanceProfileArn: !GetAtt 'C9InstanceProfile.Arn'
+        IDEStackName: !Ref 'AWS::StackName'      
 Outputs:
   C9Instance:
     Description: Cloud9 Instance Name
