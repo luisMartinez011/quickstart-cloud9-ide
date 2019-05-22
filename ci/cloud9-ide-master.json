@@ -4,17 +4,16 @@
         "ParameterValue": "$[taskcat_getaz_2]"
     },
     {
-        "ParameterKey": "QSS3BucketName",
-        "ParameterValue": "$[taskcat_autobucket]"
-    },
-    {
         "ParameterKey": "KeyPairName",
-        "ParameterValue": "cikey"
+        "ParameterValue": "override"
     },
     {
         "ParameterKey": "RemoteAccessCIDR",
-        "ParameterValue": "10.0.0.0/0"
+        "ParameterValue": "10.0.0.0/16"
+    },
+    {
+        "ParameterKey": "AvailabilityZones",
+        "ParameterValue": "$[taskcat_genaz_3]"
     }
-
 ]
 

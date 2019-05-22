@@ -1,6 +1,6 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Cloud9 + QuickStart VPC Feb,19,2019 (qs-1pb4pod81)
+Description: Cloud9 + QuickStart VPC (Master Template) (qs-1pb4pod81)
 Metadata:
   LICENSE: |-
     Copyright 2019 Amazon Web Services
@@ -139,37 +139,11 @@ Resources:
         PublicSubnet2CIDR: "10.0.144.0/20"
         NumberOfAZs: '2'
   IDEStack:
-    DependsOn: VPCStack
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL:
-        Fn::Sub: https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/cloud9-ide-instance.yaml
+      TemplateURL: !Sub >-
+        https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/cloud9-ide-instance.yaml
       Parameters:
-        C9InstanceType:
-          Ref: C9InstanceType
-        C9StopTime:
-          Ref: C9StopTime
-        C9Subnet:
-          Fn::GetAtt: VPCStack.Outputs.PublicSubnet1ID
-  CRStack:
-    DependsOn: IDEStack
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL:
-        Fn::Sub: https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/cloud9-ide-cr.yaml
-      Parameters:
-        QSS3BucketName:
-          Ref: QSS3BucketName
-        QSS3KeyPrefix:
-          Ref: QSS3KeyPrefix
-        EBSVolumeSize:
-          Ref: EBSVolumeSize
-        EnvironmentId:
-          Fn::GetAtt: IDEStack.Outputs.C9Instance
-        C9InstanceProfileName:
-          Fn::GetAtt: IDEStack.Outputs.C9InstanceProfileName
-        C9InstanceProfileArn:
-          Fn::GetAtt: IDEStack.Outputs.C9InstanceProfileArn
-        IDEStackName:
-          Fn::GetAtt: IDEStack.Outputs.IDEStackName
-...
+        C9InstanceType: !Ref 'C9InstanceType'
+        C9StopTime: !Ref 'C9StopTime'
+        C9Subnet: !GetAtt 'VPCStack.Outputs.PublicSubnet1ID'
