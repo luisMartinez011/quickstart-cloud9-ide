@@ -25,17 +25,17 @@ Metadata:
         - QSS3KeyPrefix         
     ParameterLabels:
       C9InstanceType:
-        default: Cloud9 Instance Type
+        default: Cloud9 instance type
       C9StopTime:
-        default: Stop Time
+        default: Stop time
       C9Subnet:
         default: Subnet ID
       EBSVolumeSize:
-        default: EBS Volume Size        
+        default: EBS volume size        
       QSS3BucketName:
-        default: Quick Start S3 Bucket Name
+        default: Quick Start S3 bucket name
       QSS3KeyPrefix:
-        default: Quick Start S3 Key Prefix               
+        default: Quick Start S3 key prefix               
 Parameters:
   QSS3BucketName:
     AllowedPattern: '^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$'
@@ -61,7 +61,7 @@ Parameters:
     Type: String
   C9InstanceType:
     Description: The instance type of the new Amazon EC2 instance that AWS Cloud9
-      will launch for the development environment (for example, 't2.micro').
+      will launch for the development environment.
     Type: String
     Default: t2.micro
     AllowedValues:
@@ -89,10 +89,10 @@ Parameters:
     Type: Number
     Default: 30
   C9Subnet:
-    Description: Subnet for your Cloud9 instance.
+    Description: The ID of the private subnet where your Cloud9 IDE will be installed.
     Type: String
   EBSVolumeSize:
-    Description: The desired size (GB) of the EBS volume for your Cloud9 IDE.
+    Description: The desired size (in GB) of the Amazon EBS volume for your Cloud9 IDE.
     Type: Number
     Default: 100        
 Resources:
