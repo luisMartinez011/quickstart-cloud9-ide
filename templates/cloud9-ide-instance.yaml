@@ -134,7 +134,7 @@ Resources:
         EnvironmentId: !Ref 'C9Instance'
         C9InstanceProfileName: !Ref 'C9InstanceProfile'
         C9InstanceProfileArn: !GetAtt 'C9InstanceProfile.Arn'
-        IDEStackName: !Ref 'AWS::StackName'      
+        IDEStackName: !Ref 'AWS::StackName'
 Outputs:
   C9Instance:
     Description: Cloud9 Instance Name

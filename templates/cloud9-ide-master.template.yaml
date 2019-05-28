@@ -28,7 +28,7 @@ Metadata:
         default: AWS Quick Start configuration
       Parameters:
         - QSS3BucketName
-        - QSS3KeyPrefix            
+        - QSS3KeyPrefix           
     ParameterLabels:
       AvailabilityZones:
         default: Availability Zones
