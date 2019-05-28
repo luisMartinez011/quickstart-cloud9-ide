@@ -23,12 +23,12 @@ Metadata:
       Parameters:
       - C9InstanceType
       - C9StopTime
-      - EBSVolumeSize   
+      - EBSVolumeSize
     - Label:
         default: AWS Quick Start configuration
       Parameters:
         - QSS3BucketName
-        - QSS3KeyPrefix            
+        - QSS3KeyPrefix           
     ParameterLabels:
       AvailabilityZones:
         default: Availability Zones
@@ -42,18 +42,14 @@ Metadata:
         default: S3 key prefix
       EBSVolumeSize:
         default: EBS volume size
-      EnvironmentId:
-        default: Cloud9 instance environment ID
-      C9InstanceProfileName:
-        default: Cloud9 instance profile name  
-      C9InstanceProfileArn:
-        default: Cloud9 instance profile ARN
       C9InstanceType:
         default: Cloud9 instance type
       C9StopTime:
         default: Stop time
       C9Subnet:
         default: Subnet ID
+      NumberOfAZs:
+        default: Number of Availability Zones      
 Parameters:
   AvailabilityZones:
     Description: >-
@@ -129,6 +125,14 @@ Parameters:
     Description: The desired size (in GB) of the Amazon EBS volume for your Cloud9 IDE.
     Type: Number
     Default: 100
+  NumberOfAZs:
+    Description: Number of Availability Zones to use in the VPC. This must match your selections in the list of Availability Zones parameter.
+    Type: String
+    Default: 2
+    AllowedValues:
+    - 2
+    - 3
+    - 4  
 Resources: 
   VPCStack:
     Type: AWS::CloudFormation::Stack
@@ -143,7 +147,7 @@ Resources:
         KeyPairName: !Ref KeyPairName
         PublicSubnet1CIDR: "10.0.128.0/20"
         PublicSubnet2CIDR: "10.0.144.0/20"
-        NumberOfAZs: '2'
+        NumberOfAZs: !Ref 'NumberOfAZs'
   IDEStack:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -153,3 +157,4 @@ Resources:
         C9InstanceType: !Ref 'C9InstanceType'
         C9StopTime: !Ref 'C9StopTime'
         C9Subnet: !GetAtt 'VPCStack.Outputs.PublicSubnet1ID'
+
