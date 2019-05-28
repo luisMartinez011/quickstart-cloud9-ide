@@ -1,5 +1,5 @@
-#quickstart-cloud9-ide
-##AWS Cloud9 Cloud-Based IDE
+# quickstart-cloud9-ide
+## AWS Cloud9 Cloud-Based IDE
 
 This Quick Start deploys Amazon Web Services (AWS) Cloud9 integrated development environment (IDE) in the AWS Cloud in about 30 minutes.
 
