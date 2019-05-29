@@ -13,6 +13,9 @@ Metadata:
       - KeyPairName      
       - PrivateSubnet1CIDR
       - PrivateSubnet2CIDR
+      - PublicSubnet1CIDR
+      - PublicSubnet2CIDR
+      - RemoteAccessCIDR
     - Label:
         default: Cloud9 configuration
       Parameters:
@@ -45,6 +48,12 @@ Metadata:
         default: Private Subnet 1 CIDR
       PrivateSubnet2CIDR:
         default: Private Subnet 2 CIDR
+      PublicSubnet1CIDR:
+        default: Public Subnet 1 CIDR
+      PublicSubnet2CIDR:
+        default: Public Subnet 2 CIDR
+      RemoteAccessCIDR:
+        default: Allowed External Access CIDR (bastion access)
 Parameters:
   AvailabilityZones:
     Description: >-
@@ -52,6 +61,11 @@ Parameters:
       Availability Zones are used for this deployment, and the logical order of
       your selections is preserved.
     Type: List<AWS::EC2::AvailabilityZone::Name>
+  RemoteAccessCIDR:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/x
+    Description: The CIDR IP range that is permitted to access the instances We recommend that you set this value to a trusted IP range.
+    Type: String
   PrivateSubnet1CIDR:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
     ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
@@ -63,6 +77,20 @@ Parameters:
     ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
     Default: 10.0.32.0/19
     Description: CIDR block for private subnet 2 located in Availability Zone 2
+    Type: String
+  PublicSubnet1CIDR:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
+    Default: 10.0.128.0/20
+    Description: CIDR block for the public (DMZ) subnet 1 located in Availability
+      Zone 1
+    Type: String
+  PublicSubnet2CIDR:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
+    Default: 10.0.144.0/20
+    Description: CIDR block for the public (DMZ) subnet 2 located in Availability
+      Zone 2
     Type: String
   KeyPairName:
     Description: >-
@@ -144,8 +172,10 @@ Resources:
           - !Ref AvailabilityZones
         CreatePrivateSubnets: 'false'
         KeyPairName: !Ref KeyPairName
-        PrivateSubnet1CIDR: !Ref PrivateSubnet1CIDR
-        PrivateSubnet2CIDR: !Ref PrivateSubnet2CIDR
+        PrivateSubnet1ACIDR: !Ref 'PrivateSubnet1CIDR'
+        PrivateSubnet2ACIDR: !Ref 'PrivateSubnet2CIDR'
+        PublicSubnet1CIDR: !Ref 'PublicSubnet1CIDR'
+        PublicSubnet2CIDR: !Ref 'PublicSubnet2CIDR'
         NumberOfAZs: !Ref 'NumberOfAZs'
   IDEStack:
     Type: AWS::CloudFormation::Stack
@@ -157,4 +187,32 @@ Resources:
         C9InstanceType: !Ref 'C9InstanceType'
         C9StopTime: !Ref 'C9StopTime'
         C9Subnet: !GetAtt 'VPCStack.Outputs.PublicSubnet1ID'
+  BastionStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL:
+        Fn::Sub: https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}submodules/quickstart-linux-bastion/templates/linux-bastion.template
+      Parameters:
+        BastionAMIOS: 'Amazon-Linux-HVM'
+        BastionInstanceType: 't2.micro'
+        KeyPairName:
+          Ref: KeyPairName
+        PublicSubnet1ID:
+          Fn::GetAtt:
+          - VPCStack
+          - Outputs.PublicSubnet1ID
+        PublicSubnet2ID:
+          Fn::GetAtt:
+          - VPCStack
+          - Outputs.PublicSubnet2ID
+        QSS3BucketName:
+          Ref: QSS3BucketName
+        QSS3KeyPrefix:
+          Fn::Sub: ${QSS3KeyPrefix}submodules/quickstart-linux-bastion/
+        RemoteAccessCIDR:
+          Ref: RemoteAccessCIDR
+        VPCID:
+          Fn::GetAtt:
+          - VPCStack
+          - Outputs.VPCID
 
