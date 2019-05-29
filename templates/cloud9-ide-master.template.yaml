@@ -57,7 +57,7 @@ Metadata:
       PublicSubnet2CIDR:
         default: Public Subnet 2 CIDR
       EnableBastionStack:
-        default: Create Bastion Entray point 
+        default: Create Bastion entry point 
       RemoteAccessCIDR:
         default: Allowed External Access CIDR (bastion access)
 Parameters:
