@@ -23,7 +23,7 @@ Metadata:
       C9StopTime:
         default: Stop time
       C9Subnet:
-        default: Subnet ID
+        default: Private Subnet ID
       EBSVolumeSize:
         default: EBS volume size        
       QSS3BucketName:
