@@ -17,6 +17,8 @@ Metadata:
       - AvailabilityZones
       - NumberOfAZs
       - KeyPairName      
+      - PublicSubnet1CIDR
+      - PublicSubnet2CIDR
     - Label:
         default: Cloud9 configuration
       Parameters:
@@ -43,10 +45,12 @@ Metadata:
         default: Cloud9 instance type
       C9StopTime:
         default: Stop time
-      C9Subnet:
-        default: Subnet ID
       NumberOfAZs:
         default: Number of Availability Zones      
+      PublicSubnet1CIDR:
+        default: Public Subnet 1 CIDR
+      PublicSubnet2CIDR:
+        default: Public Subnet 2 CIDR
 Parameters:
   AvailabilityZones:
     Description: >-
@@ -54,6 +58,20 @@ Parameters:
       Availability Zones are used for this deployment, and the logical order of
       your selections is preserved.
     Type: List<AWS::EC2::AvailabilityZone::Name>
+  PublicSubnet1CIDR:
+    AllowedPattern: >-
+      ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
+    Default: 10.0.128.0/20
+    Description: CIDR block for the public (DMZ) subnet 1 located in Availability Zone 1
+    Type: String
+  PublicSubnet2CIDR:
+    AllowedPattern: >-
+      ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
+    Default: 10.0.144.0/20
+    Description: CIDR block for the public (DMZ) subnet 2 located in Availability Zone 2
+    Type: String
   KeyPairName:
     Description: >-
       The name of an existing public/private key pair, which allows you to
@@ -134,8 +152,8 @@ Resources:
           - !Ref AvailabilityZones
         CreatePrivateSubnets: 'false'
         KeyPairName: !Ref KeyPairName
-        PublicSubnet1CIDR: "10.0.128.0/20"
-        PublicSubnet2CIDR: "10.0.144.0/20"
+        PublicSubnet1CIDR: !Ref PublicSubnet1CIDR
+        PublicSubnet2CIDR: !Ref PublicSubnet2CIDR
         NumberOfAZs: !Ref 'NumberOfAZs'
   IDEStack:
     Type: AWS::CloudFormation::Stack
