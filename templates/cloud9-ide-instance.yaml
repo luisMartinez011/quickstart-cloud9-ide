@@ -121,7 +121,7 @@ Resources:
     DependsOn: 'C9Instance'
     Properties:
       Path: /
-      Roles: !Ref 'C9Role'
+      Roles: !GetAtt 'C9Role.Arn'
   CRStack:
     Type: AWS::CloudFormation::Stack
     Properties:
