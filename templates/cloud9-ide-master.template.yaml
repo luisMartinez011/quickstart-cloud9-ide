@@ -15,6 +15,10 @@ Metadata:
       - PrivateSubnet2CIDR
       - PublicSubnet1CIDR
       - PublicSubnet2CIDR
+    - Label:
+        default: Bastion Configuration
+      Parameters:
+      - EnableBastionStack
       - RemoteAccessCIDR
     - Label:
         default: Cloud9 configuration
@@ -52,6 +56,8 @@ Metadata:
         default: Public Subnet 1 CIDR
       PublicSubnet2CIDR:
         default: Public Subnet 2 CIDR
+      EnableBastionStack:
+        default: Create Bastion EntryPoint (Optional)
       RemoteAccessCIDR:
         default: Allowed External Access CIDR (bastion access)
 Parameters:
@@ -160,6 +166,17 @@ Parameters:
     - 2
     - 3
     - 4  
+  EnableBastionStack: 
+    AllowedValues: 
+      - 'true'
+      - 'false'
+    Default: 'false'
+    Description: "If true create a linux bastion"
+    Type: String
+Conditions:
+  EnableBastion: !Equals
+    - !Ref EnableBastionStack
+    - 'true'
 Resources: 
   VPCStack:
     Type: AWS::CloudFormation::Stack
@@ -188,6 +205,7 @@ Resources:
         C9StopTime: !Ref 'C9StopTime'
         C9Subnet: !GetAtt 'VPCStack.Outputs.PublicSubnet1ID'
   BastionStack:
+    Condition: EnableBastion
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL:
@@ -215,4 +233,3 @@ Resources:
           Fn::GetAtt:
           - VPCStack
           - Outputs.VPCID
-
