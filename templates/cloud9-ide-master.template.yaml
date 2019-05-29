@@ -16,7 +16,7 @@ Metadata:
       - PublicSubnet1CIDR
       - PublicSubnet2CIDR
     - Label:
-        default: Bastion Configuration
+        default: Bastion configuration
       Parameters:
       - EnableBastionStack
       - RemoteAccessCIDR
@@ -57,7 +57,7 @@ Metadata:
       PublicSubnet2CIDR:
         default: Public Subnet 2 CIDR
       EnableBastionStack:
-        default: Create Bastion EntryPoint (Optional)
+        default: Create Bastion Entray point 
       RemoteAccessCIDR:
         default: Allowed External Access CIDR (bastion access)
 Parameters:
@@ -171,7 +171,7 @@ Parameters:
       - 'true'
       - 'false'
     Default: 'false'
-    Description: "If true create a linux bastion"
+    Description: "(Optional) If true create a Linux bastion"
     Type: String
 Conditions:
   EnableBastion: !Equals
