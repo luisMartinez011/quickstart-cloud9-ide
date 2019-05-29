@@ -154,6 +154,7 @@ Resources:
       TemplateURL: !Sub >-
         https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/cloud9-ide-instance.yaml
       Parameters:
+        EBSVolumeSize: !Ref 'EBSVolumeSize'
         C9InstanceType: !Ref 'C9InstanceType'
         C9StopTime: !Ref 'C9StopTime'
         C9Subnet: !GetAtt 'VPCStack.Outputs.PublicSubnet1ID'
