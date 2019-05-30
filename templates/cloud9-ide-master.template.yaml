@@ -187,7 +187,7 @@ Resources:
         AvailabilityZones: !Join 
           - ','
           - !Ref AvailabilityZones
-        CreatePrivateSubnets: 'false'
+        CreatePrivateSubnets: 'true'
         KeyPairName: !Ref KeyPairName
         PrivateSubnet1ACIDR: !Ref 'PrivateSubnet1CIDR'
         PrivateSubnet2ACIDR: !Ref 'PrivateSubnet2CIDR'

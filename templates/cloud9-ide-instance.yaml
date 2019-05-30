@@ -23,7 +23,7 @@ Metadata:
       C9StopTime:
         default: Stop time
       C9Subnet:
-        default: Private Subnet ID
+        default: Public Subnet ID
       EBSVolumeSize:
         default: EBS volume size        
       QSS3BucketName:
@@ -83,7 +83,7 @@ Parameters:
     Type: Number
     Default: 30
   C9Subnet:
-    Description: The ID of the private subnet where your Cloud9 IDE will be installed.
+    Description: The ID of the public subnet where your Cloud9 IDE will be installed.
     Type: String
   EBSVolumeSize:
     Description: The desired size (in GB) of the Amazon EBS volume for your Cloud9 IDE.
