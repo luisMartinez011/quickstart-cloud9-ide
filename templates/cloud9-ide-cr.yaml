@@ -315,7 +315,7 @@ Resources:
       Runtime: python3.6
       Description: Cloud9 Instance Role Function
       MemorySize: 128
-      Timeout: 900
+      Timeout: 300
       Role: !GetAtt 'C9InstanceFunctionRole.Arn'
       Code:
         S3Bucket: !Ref 'LambdaZipsBucket'
