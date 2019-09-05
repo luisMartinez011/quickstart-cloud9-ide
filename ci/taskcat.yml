@@ -11,6 +11,9 @@ global:
     - us-east-2
   reporting: true
 tests:
-  c9-ide:
+  c9:
     parameter_input: cloud9-ide-master.json
     template_file: cloud9-ide-master.template.yaml
+    regions:
+    - ap-southeast-1
+    - ap-northeast-1
