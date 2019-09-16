@@ -108,8 +108,6 @@ Resources:
         QSS3KeyPrefix: !Ref 'QSS3KeyPrefix'
         EBSVolumeSize: !Ref 'EBSVolumeSize'
         EnvironmentId: !Ref 'C9Instance'
-        C9InstanceProfileName: !Ref 'C9InstanceProfile'
-        C9InstanceProfileArn: !GetAtt 'C9InstanceProfile.Arn'
         IDEStackName: !Ref 'AWS::StackName'
 Outputs:
   C9Instance:

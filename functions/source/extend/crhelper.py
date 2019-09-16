@@ -26,8 +26,10 @@ import threading
 import random
 import string
 
+
 lambda_client = boto3.client('lambda')
 events_client = boto3.client('events')
+
 
 def log_config(event, loglevel=None, botolevel=None):
     if 'ResourceProperties' in event.keys():
@@ -39,18 +41,21 @@ def log_config(event, loglevel=None, botolevel=None):
         loglevel = 'warning'
     if not botolevel:
         botolevel = 'error'
-
+    # Set log verbosity levels
     loglevel = getattr(logging, loglevel.upper(), 20)
     botolevel = getattr(logging, botolevel.upper(), 40)
     mainlogger = logging.getLogger()
     mainlogger.setLevel(loglevel)
     logging.getLogger('boto3').setLevel(botolevel)
     logging.getLogger('botocore').setLevel(botolevel)
+    # Set log message format
     logfmt = '[%(requestid)s][%(asctime)s][%(levelname)s] %(message)s \n'
     mainlogger.handlers[0].setFormatter(logging.Formatter(logfmt))
     return logging.LoggerAdapter(mainlogger, {'requestid': event['RequestId']})
 
+
 log = log_config({"RequestId": "CONTAINER_INIT"})
+
 
 def send(event, context, response_status, response_data, physical_resource_id, logger, reason=None):
 
@@ -96,30 +101,41 @@ def send(event, context, response_status, response_data, physical_resource_id, l
         logger.error("send(..) failed executing requests.put(..): " + str(e))
         raise
 
+
+# Function that executes just before lambda excecution times out
 def timeout(event, context, logger):
     logger.error("Execution is about to time out, sending failure message")
     send(event, context, "FAILED", {}, "", reason="Execution timed out", logger=logger)
 
+
+# Handler function
 def cfn_handler(event, context, create_func, update_func, delete_func, poll_func, logger, init_failed):
 
     logger.info("Lambda RequestId: %s CloudFormation RequestId: %s" %
                 (context.aws_request_id, event['RequestId']))
 
+    # Define an object to place any response information you would like to send
+    # back to CloudFormation (these keys can then be used by Fn::GetAttr)
     response_data = {}
 
+    # Define a physicalId for the resource, if the event is an update and the
+    # returned phyiscalid changes, cloudformation will then issue a delete
+    # against the old id
     physical_resource_id = None
 
     logger.debug("EVENT: " + json.dumps(event))
-
+    # handle init failures
     if init_failed:
         send(event, context, "FAILED", response_data, physical_resource_id, init_failed, logger)
         raise init_failed
 
+    # Setup timer to catch timeouts
     t = threading.Timer((context.get_remaining_time_in_millis()/1000.00)-0.5,
                         timeout, args=[event, context, logger])
     t.start()
 
     try:
+        # Execute custom resource handlers
         logger.info("Received a %s Request" % event['RequestType'])
         if 'Poll' in event.keys():
             physical_resource_id, response_data = poll_func(event, context)
@@ -131,6 +147,7 @@ def cfn_handler(event, context, create_func, update_func, delete_func, poll_func
             physical_resource_id, response_data = delete_func(event, context)
 
         if "Complete" in response_data.keys():
+            # Removing lambda schedule for poll
             if 'Poll' in event.keys():
                 remove_poll(event, context)
 
@@ -139,6 +156,8 @@ def cfn_handler(event, context, create_func, update_func, delete_func, poll_func
         else:
             logger.info("Stack operation still in progress, not sending any response to cfn")
 
+    # Catch any exceptions, log the stacktrace, send a failure back to
+    # CloudFormation and then raise an exception
     except Exception as e:
         reason = str(e)
         logger.error(e, exc_info=True)
@@ -152,14 +171,17 @@ def cfn_handler(event, context, create_func, update_func, delete_func, poll_func
     finally:
         t.cancel()
 
+
 def cleanup_response(response_data):
     for k in ["Complete", "Poll", "permission", "rule"]:
         if k in response_data.keys():
             del response_data[k]
     return response_data
 
+
 def rand_string(l):
     return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(l))
+
 
 def add_permission(context, rule_arn):
     sid = 'QuickStartStackMaker-' + rand_string(8)
@@ -172,6 +194,7 @@ def add_permission(context, rule_arn):
     )
     return sid
 
+
 def put_rule():
     response = events_client.put_rule(
         Name='QuickStartStackMaker-' + rand_string(8),
@@ -180,6 +203,7 @@ def put_rule():
 
     )
     return response["RuleArn"]
+
 
 def put_targets(func_name, event):
     region = event['rule'].split(":")[3]
@@ -196,11 +220,13 @@ def put_targets(func_name, event):
         ]
     )
 
+
 def remove_targets(rule_arn):
     events_client.remove_targets(
         Rule=rule_arn.split("/")[1],
         Ids=['1']
     )
+
 
 def remove_permission(context, sid):
     lambda_client.remove_permission(
@@ -208,15 +234,18 @@ def remove_permission(context, sid):
         StatementId=sid
     )
 
+
 def delete_rule(rule_arn):
     events_client.delete_rule(
         Name=rule_arn.split("/")[1]
     )
 
+
 def setup_poll(event, context):
     event['rule'] = put_rule()
     event['permission'] = add_permission(context, event['rule'])
     put_targets(context.function_name, event)
+
 
 def remove_poll(event, context):
     error = False
@@ -237,3 +266,4 @@ def remove_poll(event, context):
         error = True
     if error:
         raise Exception("failed to cleanup CloudWatch event polling")
+

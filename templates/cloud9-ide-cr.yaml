@@ -11,8 +11,6 @@ Metadata:
       - EBSVolumeSize
       - EnvironmentId
       - IDEStackName
-      - C9InstanceProfileName
-      - C9InstanceProfileArn
     - Label:
         default: AWS Quick Start Configuration
       Parameters:
@@ -26,10 +24,6 @@ Metadata:
         default: Cloud9 IDE StackName
       EnvironmentId:
         default: Cloud9 Instance Environment ID
-      C9InstanceProfileName:
-        default: Cloud9 Instance Profile Name  
-      C9InstanceProfileArn:
-        default: Cloud9 Instance Profile ARN
       QSS3BucketName:
         default: Quick Start S3 Bucket Name
       QSS3KeyPrefix:
@@ -68,12 +62,6 @@ Parameters:
     Default: 100
   EnvironmentId:
     Description: The name of your Cloud9 instance.
-    Type: String
-  C9InstanceProfileName:
-    Description: The name of the Cloud9 instance IAM profile name.
-    Type: String
-  C9InstanceProfileArn:
-    Description: The ARN of the Cloud9 instance IAM profile.
     Type: String
   OutputBucketName:
     Description: 'OPTIONAL: Bucket Name where the zip file output should be placed,
@@ -328,5 +316,3 @@ Resources:
       EBSVolumeSize: !Ref 'EBSVolumeSize'
       StackName: !Ref 'IDEStackName'
       EnvironmentId: !Ref 'EnvironmentId'
-      C9InstanceProfileName: !Ref 'C9InstanceProfileName'
-      C9InstanceProfileArn: !Ref 'C9InstanceProfileArn'
