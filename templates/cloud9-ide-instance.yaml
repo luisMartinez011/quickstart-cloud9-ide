@@ -115,12 +115,6 @@ Outputs:
   C9Instance:
     Description: Cloud9 Instance Name
     Value: !Ref 'C9Instance'
-  C9InstanceProfileName:
-    Description: Cloud9 Instance Profile Name
-    Value: !Ref 'C9InstanceProfile'
-  C9InstanceProfileArn:
-    Description: Cloud9 Instance Profile Arn
-    Value: !GetAtt 'C9InstanceProfile.Arn'
   IDEStackName:
     Description: CloudFormation Stack Name
     Value: !Ref 'AWS::StackName'
