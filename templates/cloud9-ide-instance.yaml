@@ -98,25 +98,6 @@ Resources:
       AutomaticStopTimeMinutes: !Ref 'C9StopTime'
       InstanceType: !Ref 'C9InstanceType'
       SubnetId: !Ref 'C9Subnet'
-  C9Role:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-        - Effect: Allow
-          Principal:
-            Service: ec2.amazonaws.com
-          Action: sts:AssumeRole
-      ManagedPolicyArns:
-      - arn:aws:iam::aws:policy/AdministratorAccess
-  C9InstanceProfile:
-    Type: AWS::IAM::InstanceProfile
-    DependsOn: 'C9Instance'
-    Properties:
-      Path: /
-      Roles: 
-        - !Ref C9Role
   CRStack:
     Type: AWS::CloudFormation::Stack
     Properties:
