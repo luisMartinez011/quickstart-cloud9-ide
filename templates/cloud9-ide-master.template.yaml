@@ -204,6 +204,8 @@ Resources:
         C9InstanceType: !Ref 'C9InstanceType'
         C9StopTime: !Ref 'C9StopTime'
         C9Subnet: !GetAtt 'VPCStack.Outputs.PublicSubnet1ID'
+        QSS3BucketName: !Ref QSS3BucketName
+        QSS3KeyPrefix: !Ref QSS3KeyPrefix
   BastionStack:
     Condition: EnableBastion
     Type: AWS::CloudFormation::Stack
@@ -225,7 +227,6 @@ Resources:
           - Outputs.PublicSubnet2ID
         QSS3BucketName:
           Ref: QSS3BucketName
-        QSS3KeyPrefix:
           Fn::Sub: ${QSS3KeyPrefix}submodules/quickstart-linux-bastion/
         RemoteAccessCIDR:
           Ref: RemoteAccessCIDR
