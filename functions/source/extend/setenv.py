@@ -51,10 +51,6 @@ def get_instance(instance_name):
     return response['Reservations'][0]['Instances'][0]
 
 
-def attach_role(iam_instance_profile, instance_id):
-    client.associate_iam_instance_profile(IamInstanceProfile=iam_instance_profile, InstanceId=instance_id)
-
-
 def create(event, context):
     """
     Place your code to handle Create events here.
@@ -72,14 +68,6 @@ def create(event, context):
 
     # Get the volume id of the Cloud9 IDE
     block_volume_id = instance['BlockDeviceMappings'][0]['Ebs']['VolumeId']
-
-    # Create the IamInstanceProfile request object
-    iam_instance_profile = {
-        'Arn': event['ResourceProperties']['C9InstanceProfileArn'],
-        'Name': event['ResourceProperties']['C9InstanceProfileName']
-    }
-    print("Attaching IAM role to instance {}.".format(instance_name))
-    attach_role(iam_instance_profile, instance['InstanceId'])
 
     # Modify the size of the Cloud9 IDE EBS volume
     client.get_waiter('instance_status_ok').wait(InstanceIds=[instance['InstanceId']])
