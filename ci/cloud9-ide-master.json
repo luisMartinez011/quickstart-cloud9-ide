@@ -3,10 +3,6 @@
         "ParameterKey": "AvailabilityZones",
         "ParameterValue": "$[taskcat_getaz_2]"
     },
-    {
-        "ParameterKey": "KeyPairName",
-        "ParameterValue": "override"
-    },
         {
         "ParameterKey": "QSS3KeyPrefix",
         "ParameterValue": "quickstart-cloud9-ide/"
