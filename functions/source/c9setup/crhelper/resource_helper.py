@@ -257,4 +257,4 @@ class CfnResource(object):
             logger.error("Cannot remove CloudWatch events target, Rule arn not available in event")
             error = True
         if error:
-            raise Exception("failed to cleanup CloudWatch event polling")
+            raise Exception("Failed to cleanup CloudWatch event polling")

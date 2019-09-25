@@ -33,12 +33,12 @@ def get_command_output(instance_id, command_id):
 
 
 def send_command(instance_id, commands):
-    logger.debug("sending command to %s : %s" % (instance_id, commands))
+    logger.debug("Sending command to %s : %s" % (instance_id, commands))
     try:
         return ssm_client.send_command(InstanceIds=[instance_id], DocumentName='AWS-RunShellScript',
                                        Parameters={'commands': commands})
     except ssm_client.exceptions.InvalidInstanceId:
-        logger.debug("Failed to execute ssm command", exc_info=True)
+        logger.debug("Failed to execute SSM command", exc_info=True)
         return
 
 
@@ -55,7 +55,7 @@ def create(event, context):
     while not ssm_ready(instance_id):
         retries -= 1
         if retries == 0:
-            raise Exception("Timed out waiting for instance to register with ssm")
+            raise Exception("Timed out waiting for instance to register with SSM")
         sleep(15)
 
 
@@ -68,7 +68,7 @@ def poll_create(event, context):
     instance_id = instance_response['Reservations'][0]['Instances'][0]['InstanceId']
     bootstrap_path = event['ResourceProperties']['BootstrapPath']
     ssm_param_response = ssm_client.get_parameter(Name=event['ResourceProperties']['SSMParamStore'])
-    size = json.loads(ssm_param_response['Value'])['size']
+    size = ssm_param_response['Parameter']['Value']
     retries = 6
     while True:
         commands = ['mkdir -p /tmp/bootstrap', 'cd /tmp/bootstrap',
@@ -87,10 +87,10 @@ def poll_create(event, context):
             cmd_output_response = get_command_output(instance_id, send_response['Command']['CommandId'])
             break
         except ssm_client.exceptions.InvocationDoesNotExist:
-            logger.debug('invocation not available in ssm yet', exc_info=True)
+            logger.debug('Invocation not available in SSM yet', exc_info=True)
         retries -= 1
         if retries == 0:
-            raise Exception("Timed out waiting for ssm command to complete")
+            raise Exception("Timed out waiting for SSM command to complete")
         sleep(15)
     if cmd_output_response['StandardErrorContent']:
         raise Exception("ssm command failed: " + cmd_output_response['StandardErrorContent'][:235])
