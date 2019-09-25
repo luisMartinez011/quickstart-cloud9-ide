@@ -60,13 +60,13 @@ Metadata:
 Parameters:
   QSS3BucketName:
     AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
-    ConstraintDescription: 'Quick Start bucket name can include numbers, lowercase
+    ConstraintDescription: Quick Start bucket name can include numbers, lowercase
       letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen
-      (-).'
+      (-).
     Default: aws-quickstart
-    Description: 'S3 bucket name for the Quick Start assets. This string can include
+    Description: S3 bucket name for the Quick Start assets. This string can include
       numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start
-      or end with a hyphen (-).'
+      or end with a hyphen (-).
     Type: String
   QSS3KeyPrefix:
     AllowedPattern: ^[0-9a-zA-Z-/.]*$
@@ -154,7 +154,7 @@ Parameters:
       - 'true'
       - 'false'
     Default: 'false'
-    Description: "(Optional) If true create a Linux bastion"
+    Description: (Optional) If true create a Linux bastion.
     Type: String
   NumberOfAZs:
     Description: Number of Availability Zones to use in the VPC. This must match your selections in the list of Availability Zones parameter.
@@ -202,7 +202,7 @@ Resources:
   GetAzsLambda:
     Type: AWS::Lambda::Function
     Properties:
-      Description: gets 3 az names from the region the lambda is launched in
+      Description: Gets 3 availability zone names from the region the lambda is launched in.
       Handler: index.handler
       Runtime: python3.6
       Role: !GetAtt 'GetAzsRole.Arn'
@@ -256,7 +256,7 @@ Resources:
   CreateKeypairLambda:
     Type: AWS::Lambda::Function
     Properties:
-      Description: creates a keypair and stores private key in ssm parameter store
+      Description: Creates a keypair and stores private key in SSM parameter store.
       Handler: index.handler
       Runtime: python3.6
       Role: !GetAtt 'CreateKeypairRole.Arn'
@@ -327,7 +327,7 @@ Resources:
     Condition: AutoCIDR
     Type: AWS::Lambda::Function
     Properties:
-      Description: creates a keypair and stores private key in ssm parameter store
+      Description: Creates a keypair and stores private key in SSM parameter store.
       Handler: index.handler
       Runtime: python3.6
       Role: !GetAtt 'GetIpRole.Arn'

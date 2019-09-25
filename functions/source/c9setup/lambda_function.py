@@ -49,20 +49,9 @@ def create(event, context):
         'Name': 'tag:aws:cloud9:environment', 'Values': [event['ResourceProperties']['Cloud9Environment']]
     }])
     instance_id = response['Reservations'][0]['Instances'][0]['InstanceId']
-    public_ip = response['Reservations'][0]['Instances'][0]['PublicIpAddress']
     ec2_client.associate_iam_instance_profile(
         IamInstanceProfile={'Name': event['ResourceProperties']['InstanceProfile']},
         InstanceId=instance_id)    
-    resources = cfn_client.describe_stack_resources(StackName=event['StackId'])['StackResources']
-    stack_id = [r['PhysicalResourceId'] for r in resources if r['LogicalResourceId'] == 'OpenShiftStack'][0]
-    logger.debug(stack_id)
-    resources = cfn_client.describe_stack_resources(StackName=stack_id)['StackResources']
-    logger.debug(resources)
-    security_group = [r['PhysicalResourceId'] for r in resources if r['LogicalResourceId'] == 'OpenShiftSecurityGroup'][
-        0]
-    ec2_client.authorize_security_group_ingress(CidrIp=public_ip + '/32', FromPort=443, GroupId=security_group,
-                                                IpProtocol='tcp', ToPort=443)
-    retries = 50
     while not ssm_ready(instance_id):
         retries -= 1
         if retries == 0:
@@ -78,7 +67,7 @@ def poll_create(event, context):
     }])
     instance_id = instance_response['Reservations'][0]['Instances'][0]['InstanceId']
     bootstrap_path = event['ResourceProperties']['BootstrapPath']
-    ssm_param_response = ssm_client.get_param_value(Name=event['ResourceProperties']['SSMParamStore'])
+    ssm_param_response = ssm_client.get_parameter(Name=event['ResourceProperties']['SSMParamStore'])
     size = json.loads(ssm_param_response['Value'])['size']
     retries = 6
     while True:

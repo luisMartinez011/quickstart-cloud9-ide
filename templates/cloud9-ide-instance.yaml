@@ -33,13 +33,13 @@ Metadata:
 Parameters:
   QSS3BucketName:
     AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
-    ConstraintDescription: 'Quick Start bucket name can include numbers, lowercase
+    ConstraintDescription: Quick Start bucket name can include numbers, lowercase
       letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen
-      (-).'
+      (-).
     Default: aws-quickstart
-    Description: 'S3 bucket name for the Quick Start assets. This string can include
+    Description: S3 bucket name for the Quick Start assets. This string can include
       numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start
-      or end with a hyphen (-).'
+      or end with a hyphen (-).
     Type: String
   QSS3KeyPrefix:
     AllowedPattern: ^[0-9a-zA-Z-/.]*$
@@ -128,7 +128,7 @@ Resources:
       ServiceToken: !GetAtt C9SetupLambda.Arn
       InstanceProfile: !Ref Cloud9InstanceProfile
       Cloud9Environment: !Ref Cloud9Env
-      BootstrapPath: !Sub 's3://${QSS3BucketName}/${QSS3KeyPrefix}scripts/bootstrap.sh'
+      BootstrapPath: !Sub s3://${QSS3BucketName}/${QSS3KeyPrefix}scripts/bootstrap.sh
       SSMParamStore: !Ref SSMParamStore
   C9SetupRole:
     Type: AWS::IAM::Role
@@ -158,6 +158,9 @@ Resources:
             - ec2:AuthorizeSecurityGroupIngress
             - ssm:SendCommand
             - ssm:GetCommandInvocation
+            - ssm:DescribeParameters
+            - ssm:GetParameters
+            - ssm:GetParameter
             - s3:GetObject
             Resource: '*'
           - Effect: Allow
@@ -179,16 +182,14 @@ Resources:
     DependsOn: CopyZips
     Type: AWS::Lambda::Function
     Properties:
-      Description: Associates a given instance profile with a given c9 environment
+      Description: Associates a given instance profile with a given Cloud9 environment
       Handler: lambda_function.handler
       Runtime: python3.6
       Role: !GetAtt C9SetupRole.Arn
       Timeout: 900
       Code:
         S3Bucket: !Ref 'LambdaZipsBucket'
-        S3Key: !Sub
-          - '${QSS3KeyPrefix}functions/packages/c9setup/lambda.zip'
-            QSS3KeyPrefix: !FindInMap [QuickStart, Config, QSS3KeyPrefix]
+        S3Key: !Sub ${QSS3KeyPrefix}functions/packages/c9setup/lambda.zip
   CopyZipsRole:
     Type: AWS::IAM::Role
     Properties:
@@ -209,10 +210,10 @@ Resources:
           Statement:
             - Effect: Allow
               Action: s3:GetObject
-              Resource: !Sub 'arn:aws:s3:::${QSS3BucketName}/${QSS3KeyPrefix}*'
+              Resource: !Sub arn:aws:s3:::${QSS3BucketName}/${QSS3KeyPrefix}*
             - Effect: Allow
               Action: [ "s3:PutObject", "s3:DeleteObject" ]
-              Resource: !Sub 'arn:aws:s3:::${LambdaZipsBucket}/${QSS3KeyPrefix}*'
+              Resource: !Sub arn:aws:s3:::${LambdaZipsBucket}/${QSS3KeyPrefix}*
   CopyZipsFunction:
     Type: AWS::Lambda::Function
     Properties:
@@ -295,10 +296,10 @@ Resources:
       - functions/packages/c9setup/lambda.zip
 Outputs:
   SSMParamStoreName:
-    Description: Cloud9 Instance EBS Volume SSM Parameter Store Name
+    Description: SSM Parameter Store Name for Cloud9 Instance EBS Volume
     Value: !Ref SSMParamStore
   SSMParamStoreValue:
-    Description: Cloud9 Instance EBS Volume Size
+    Description: SSM Parameter Store Value for Cloud9 Instance EBS Volume
     Value: !GetAtt SSMParamStore.Value
   Cloud9Env:
     Description: Cloud9 Instance Name
