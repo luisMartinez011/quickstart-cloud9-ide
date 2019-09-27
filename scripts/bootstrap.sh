@@ -3,12 +3,6 @@
 # Specify the desired volume size in GiB as a command-line argument. If not specified, default to 20 GiB.
 SIZE=${1}
 
-# Update tools.
-sudo yum update -y && \
-curl -O https://bootstrap.pypa.io/get-pip.py && \
-python3 get-pip.py --user && \
-pip3 install --upgrade --user awscli pip aws-sam-cli
-
 # Install the jq command-line JSON processor.
 sudo yum install -y jq 2&> /dev/null
 

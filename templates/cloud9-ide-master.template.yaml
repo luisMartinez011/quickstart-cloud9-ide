@@ -27,7 +27,7 @@ Metadata:
       - EBSVolumeSize    
     - Label:
         default: AWS Quick Start Configuration
-      Parameters:
+      Parameters:     
       - QSS3BucketName
       - QSS3KeyPrefix          
     ParameterLabels:
