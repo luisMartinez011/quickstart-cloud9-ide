@@ -2,7 +2,7 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: Cloud9 + QuickStart VPC (qs-1pb4pob92) (Please do not remove) May,29,2019
 Metadata:
-  LICENSE: Apache License, Version 2.0 
+  LICENSE: Apache License, Version 2.0
   AWS::CloudFormation::Interface:
     ParameterGroups:
     - Label:
@@ -11,48 +11,29 @@ Metadata:
       - C9InstanceType
       - C9StopTime
       - C9Subnet
-      - EBSVolumeSize           
+      - EBSVolumeSize
     - Label:
         default: AWS Quick Start Configuration
       Parameters:
-        - QSS3BucketName
-        - QSS3KeyPrefix         
+      - OutputBucketName      
+      - QSS3BucketName
+      - QSS3KeyPrefix   
     ParameterLabels:
       C9InstanceType:
-        default: Cloud9 instance type
+        default: Cloud9 instance type   
       C9StopTime:
-        default: Stop time
+        default: Stop time  
       C9Subnet:
         default: Public Subnet ID
       EBSVolumeSize:
-        default: EBS volume size        
+        default: EBS Volume Size        
+      OutputBucketName:
+        default: Output S3 Bucket Name                      
       QSS3BucketName:
-        default: Quick Start S3 bucket name
+        default: Quick Start S3 Bucket Name
       QSS3KeyPrefix:
-        default: Quick Start S3 key prefix               
+        default: Quick Start S3 Key Prefix     
 Parameters:
-  QSS3BucketName:
-    AllowedPattern: '^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$'
-    ConstraintDescription: >-
-      Quick Start bucket name can include numbers, lowercase letters, uppercase
-      letters, and hyphens (-). It cannot start or end with a hyphen (-).
-    Default: aws-quickstart
-    Description: >-
-      S3 bucket name for the Quick Start assets. This string can include
-      numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot
-      start or end with a hyphen (-).
-    Type: String
-  QSS3KeyPrefix:
-    AllowedPattern: '^[0-9a-zA-Z-/]*$'
-    ConstraintDescription: >-
-      Quick Start key prefix can include numbers, lowercase letters, uppercase
-      letters, hyphens (-), and forward slash (/).
-    Default: quickstart-cloud9-ide/
-    Description: >-
-      S3 key prefix for the Quick Start assets. Quick Start key prefix can
-      include numbers, lowercase letters, uppercase letters, hyphens (-), and
-      forward slash (/).
-    Type: String
   C9InstanceType:
     Description: The instance type of the new Amazon EC2 instance that AWS Cloud9
       will launch for the development environment.
@@ -84,35 +65,334 @@ Parameters:
     Default: 30
   C9Subnet:
     Description: The ID of the public subnet where your Cloud9 IDE will be installed.
-    Type: String
+    Type: String   
   EBSVolumeSize:
-    Description: The desired size (in GB) of the Amazon EBS volume for your Cloud9 IDE.
+    Description: The desired size (GB) of the EBS volume for your Cloud9 IDE.
     Type: Number
-    Default: 100        
+    Default: 100
+  OutputBucketName:
+    Description: 'OPTIONAL: Bucket Name where the zip file output should be placed,
+      if left blank a bucket name will be automatically generated.'
+    Type: String
+    Default: ''         
+  QSS3BucketName:
+    AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
+    ConstraintDescription: Quick Start bucket name can include numbers, lowercase
+      letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen
+      (-).
+    Default: aws-quickstart
+    Description: S3 bucket name for the Quick Start assets. This string can include
+      numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start
+      or end with a hyphen (-).
+    Type: String
+  QSS3KeyPrefix:
+    AllowedPattern: ^[0-9a-zA-Z-/.]*$
+    ConstraintDescription: Quick Start key prefix can include numbers, lowercase letters,
+      uppercase letters, hyphens (-), dots(.) and forward slash (/).
+    Default: quickstart-cloud9-ide/
+    Description: S3 key prefix for the Quick Start assets. Quick Start key prefix
+      can include numbers, lowercase letters, uppercase letters, hyphens (-), dots(.) and
+      forward slash (/).
+    Type: String
+Conditions:
+  AutoGenOutputBucketName: !Not
+    - !Equals
+      - !Ref 'OutputBucketName'
+      - ''      
 Resources:
-  C9Instance:
+  SSMParamStore:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Ref AWS::StackName
+      Description: !Sub '${AWS::AccountId}-${AWS::Region}-${AWS::StackName}'
+      Type: String
+      Value: !Ref EBSVolumeSize
+  RegistryBucket:
+    Type: AWS::S3::Bucket 
+  OutputBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !If
+        - AutoGenOutputBucketName
+        - !Ref 'OutputBucketName'
+        - !Ref 'AWS::NoValue'
+      VersioningConfiguration:
+        Status: Enabled
+      Tags: []        
+  LambdaZipsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      Tags: []
+  Cloud9Env:
+    DependsOn: SSMParamStore
     Type: AWS::Cloud9::EnvironmentEC2
     Properties:
-      Name: !Ref 'AWS::StackName'
+      Name: !Ref AWS::StackName
       Description: !Sub '${AWS::AccountId}-${AWS::Region}-${AWS::StackName}'
-      AutomaticStopTimeMinutes: !Ref 'C9StopTime'
-      InstanceType: !Ref 'C9InstanceType'
-      SubnetId: !Ref 'C9Subnet'
-  CRStack:
-    Type: AWS::CloudFormation::Stack
+      AutomaticStopTimeMinutes: !Ref C9StopTime
+      InstanceType: !Ref C9InstanceType
+      SubnetId: !Ref C9Subnet
+  Cloud9Role:
+    Type: AWS::IAM::Role
     Properties:
-      TemplateURL: !Sub >-
-        https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/cloud9-ide-cr.yaml
-      Parameters:
-        QSS3BucketName: !Ref 'QSS3BucketName'
-        QSS3KeyPrefix: !Ref 'QSS3KeyPrefix'
-        EBSVolumeSize: !Ref 'EBSVolumeSize'
-        EnvironmentId: !Ref 'C9Instance'
-        IDEStackName: !Ref 'AWS::StackName'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: ec2.amazonaws.com
+          Action: sts:AssumeRole
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Path: /
+      Policies:
+      - PolicyName: get-bootstrap
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action: s3:GetObject
+              Resource: !Sub 'arn:aws:s3:::${QSS3BucketName}/${QSS3KeyPrefix}*'
+      - PolicyName: describe-ec2
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action: [ "ec2:DescribeInstances", "ec2:DescribeVolumes", "ec2:ModifyVolume" ]
+              Resource: '*'       
+  Cloud9InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles: [!Ref Cloud9Role]       
+  CopyZipsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: lambda.amazonaws.com
+          Action: sts:AssumeRole
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Path: /
+      Policies:
+      - PolicyName: lambda-copier
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action: s3:GetObject
+              Resource: !Sub 'arn:aws:s3:::${QSS3BucketName}/${QSS3KeyPrefix}*'
+            - Effect: Allow
+              Action: [ "s3:PutObject", "s3:DeleteObject" ]
+              Resource: !Sub 'arn:aws:s3:::${LambdaZipsBucket}/${QSS3KeyPrefix}*'
+  CopyZipsFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Copies objects from a source S3 bucket to a destination
+      Handler: index.handler
+      Runtime: python2.7
+      Role: !GetAtt CopyZipsRole.Arn
+      Timeout: 240
+      Code:
+        ZipFile: |
+          import json
+          import logging
+          import threading
+          import boto3
+          import cfnresponse
+
+
+          def copy_objects(source_bucket, dest_bucket, prefix, objects):
+              s3 = boto3.client('s3')
+              for o in objects:
+                  key = prefix + o
+                  copy_source = {
+                      'Bucket': source_bucket,
+                      'Key': key
+                  }
+                  print('copy_source: %s' % copy_source)
+                  print('dest_bucket = %s'%dest_bucket)
+                  print('key = %s' %key)
+                  s3.copy_object(CopySource=copy_source, Bucket=dest_bucket,
+                        Key=key)
+
+
+          def delete_objects(bucket, prefix, objects):
+              s3 = boto3.client('s3')
+              objects = {'Objects': [{'Key': prefix + o} for o in objects]}
+              s3.delete_objects(Bucket=bucket, Delete=objects)
+
+
+          def timeout(event, context):
+              logging.error('Execution is about to time out, sending failure response to CloudFormation')
+              cfnresponse.send(event, context, cfnresponse.FAILED, {}, None)
+
+
+          def handler(event, context):
+              # make sure we send a failure to CloudFormation if the function
+              # is going to timeout
+              timer = threading.Timer((context.get_remaining_time_in_millis()
+                        / 1000.00) - 0.5, timeout, args=[event, context])
+              timer.start()
+
+              print('Received event: %s' % json.dumps(event))
+              status = cfnresponse.SUCCESS
+              try:
+                  source_bucket = event['ResourceProperties']['SourceBucket']
+                  dest_bucket = event['ResourceProperties']['DestBucket']
+                  prefix = event['ResourceProperties']['Prefix']
+                  objects = event['ResourceProperties']['Objects']
+                  if event['RequestType'] == 'Delete':
+                      delete_objects(dest_bucket, prefix, objects)
+                  else:
+                      copy_objects(source_bucket, dest_bucket, prefix, objects)
+              except Exception as e:
+                  logging.error('Exception: %s' % e, exc_info=True)
+                  status = cfnresponse.FAILED
+              finally:
+                  timer.cancel()
+                  cfnresponse.send(event, context, status, {}, None)
+  CopyZips:
+    Type: Custom::CopyZips
+    Properties:
+      ServiceToken: !GetAtt 'CopyZipsFunction.Arn'
+      DestBucket: !Ref 'LambdaZipsBucket'
+      SourceBucket: !Ref QSS3BucketName
+      Prefix: !Ref QSS3KeyPrefix
+      Objects:
+      - functions/packages/c9setup/lambda.zip
+      - functions/packages/DeleteBucketContents/lambda.zip      
+  C9SetupRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: lambda.amazonaws.com
+          Action: sts:AssumeRole
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Path: /
+      Policies:
+      - PolicyName: lambda-AttachRoleC9
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - ec2:DescribeInstances
+            - ec2:AssociateIamInstanceProfile
+            - ec2:DescribeIamInstanceProfileAssociations
+            - ssm:DescribeInstanceInformation
+            - cloudformation:DescribeStackResources
+            - ec2:AuthorizeSecurityGroupIngress
+            - ssm:SendCommand
+            - ssm:GetCommandInvocation
+            - ssm:DescribeParameters
+            - ssm:GetParameters
+            - ssm:GetParameter
+            - s3:GetObject
+            Resource: '*'
+          - Effect: Allow
+            Action: iam:PassRole
+            Resource: !GetAtt 'Cloud9Role.Arn'
+          - Effect: Allow
+            Action: [ "lambda:AddPermission", "lambda:RemovePermission" ]
+            Resource: '*'
+          - Effect: Allow
+            Action: [ "events:PutRule", "events:DeleteRule", "events:PutTargets", "events:RemoveTargets" ]
+            Resource: '*'
+  C9SetupLambda:
+    DependsOn: CopyZips
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Runs custom setup actions on Cloud9 environment
+      Handler: lambda_function.handler
+      Runtime: python3.6
+      Role: !GetAtt 'C9SetupRole.Arn'
+      Timeout: 900
+      Code:
+        S3Bucket: !Ref 'LambdaZipsBucket'
+        S3Key: !Sub '${QSS3KeyPrefix}functions/packages/c9setup/lambda.zip'
+  C9Setup:
+    Type: Custom::AttachRoleC9
+    Properties:
+      ServiceToken: !GetAtt 'C9SetupLambda.Arn'
+      InstanceProfile: !Ref Cloud9InstanceProfile
+      Cloud9Environment: !Ref Cloud9Env
+      BootstrapPath: !Sub 's3://${QSS3BucketName}/${QSS3KeyPrefix}scripts/bootstrap.sh'
+      SSMParamStore: !Ref SSMParamStore
+      Region: !Sub '${AWS::Region}'   
+  DeleteBucketContentsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: deletebucketcontents
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:*
+                Resource:
+                  - !Sub 'arn:aws:s3:::${OutputBucket}'
+                  - !Sub 'arn:aws:s3:::${OutputBucket}/*'
+                  - !Sub 'arn:aws:s3:::${RegistryBucket}'
+                  - !Sub 'arn:aws:s3:::${RegistryBucket}/*'
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource:
+                  - arn:aws:logs:*:*:*           
+  DeleteBucketContentsLambda:
+    DependsOn: C9Setup
+    Type: AWS::Lambda::Function
+    Properties:
+      Handler: lambda_function.lambda_handler
+      MemorySize: 128
+      Role: !GetAtt 'DeleteBucketContentsRole.Arn'
+      Runtime: python2.7
+      Timeout: 500
+      Code:
+        S3Bucket: !Ref 'LambdaZipsBucket'
+        S3Key: !Sub '${QSS3KeyPrefix}functions/packages/DeleteBucketContents/lambda.zip'     
+  DeleteRegistryBucketContents:
+    DependsOn: C9Setup
+    Type: Custom::DeleteBucketContents
+    Version: '1.0'
+    Properties:
+      ServiceToken: !GetAtt 'DeleteBucketContentsLambda.Arn'
+      OutputBucket: !Ref 'RegistryBucket'
+  DeleteTempBucketContents:
+    DependsOn: C9Setup
+    Type: Custom::DeleteBucketContents
+    Version: '1.0'
+    Properties:
+      ServiceToken: !GetAtt 'DeleteBucketContentsLambda.Arn'
+      OutputBucket: !Ref 'OutputBucket'
 Outputs:
-  C9Instance:
+  SSMParamStoreName:
+    Description: SSM Parameter Store Name for Cloud9 Instance EBS Volume
+    Value: !Ref SSMParamStore
+  SSMParamStoreValue:
+    Description: SSM Parameter Store Value for Cloud9 Instance EBS Volume
+    Value: !GetAtt SSMParamStore.Value        
+  Cloud9Env:
     Description: Cloud9 Instance Name
-    Value: !Ref 'C9Instance'
-  IDEStackName:
-    Description: CloudFormation Stack Name
-    Value: !Ref 'AWS::StackName'
+    Value: !Ref Cloud9Env
+...
