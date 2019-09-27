@@ -150,9 +150,7 @@ Parameters:
     Type: Number
     Default: 100
   EnableBastionStack: 
-    AllowedValues: 
-      - 'true'
-      - 'false'
+    AllowedValues: [ "true", "false" ]
     Default: 'false'
     Description: (Optional) If true create a Linux bastion.
     Type: String
@@ -380,9 +378,9 @@ Resources:
                   status = cfnresponse.FAILED
               cfnresponse.send(event, context, status, data, physical_id)
   SshPrivateKeySecret:
-    Type: "AWS::SecretsManager::Secret"
+    Type: AWS::SecretsManager::Secret
     Properties:
-      SecretString: !GetAtt CreateKeypair.PrivateKey              
+      SecretString: !GetAtt 'CreateKeypair.PrivateKey'              
   VPCStack:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -393,18 +391,18 @@ Resources:
           - !Ref AvailabilityZones
         CreatePrivateSubnets: 'true'
         KeyPairName: !Ref CreateKeypair
-        PrivateSubnet1ACIDR: !Ref 'PrivateSubnet1CIDR'
-        PrivateSubnet2ACIDR: !Ref 'PrivateSubnet2CIDR'
-        PublicSubnet1CIDR: !Ref 'PublicSubnet1CIDR'
-        PublicSubnet2CIDR: !Ref 'PublicSubnet2CIDR'
-        NumberOfAZs: !Ref 'NumberOfAZs'        
+        PrivateSubnet1ACIDR: !Ref PrivateSubnet1CIDR
+        PrivateSubnet2ACIDR: !Ref PrivateSubnet2CIDR
+        PublicSubnet1CIDR: !Ref PublicSubnet1CIDR
+        PublicSubnet2CIDR: !Ref PublicSubnet2CIDR
+        NumberOfAZs: !Ref NumberOfAZs       
   IDEStack:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Sub 'https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}templates/cloud9-ide-instance.yaml'    
       Parameters:
-        EBSVolumeSize: !Ref 'EBSVolumeSize'
-        C9InstanceType: !Ref 'C9InstanceType'
+        EBSVolumeSize: !Ref EBSVolumeSize
+        C9InstanceType: !Ref C9InstanceType
         C9StopTime: !Ref 'C9StopTime'
         C9Subnet: !GetAtt 'VPCStack.Outputs.PublicSubnet1ID'
         QSS3BucketName: !Ref QSS3BucketName
@@ -420,5 +418,5 @@ Resources:
         KeyPairName: !Ref CreateKeypair
         PublicSubnet1ID: !GetAtt 'VPCStack.Outputs.PublicSubnet1ID'
         PublicSubnet2ID: !GetAtt 'VPCStack.Outputs.PublicSubnet2ID'          
-        RemoteAccessCIDR: !If [ AutoCIDR, !Ref GetIp, !Ref 'RemoteAccessCIDR' ]
+        RemoteAccessCIDR: !If [ AutoCIDR, !Ref GetIp, !Ref RemoteAccessCIDR ]
         VPCID: !GetAtt 'VPCStack.Outputs.VPCID'

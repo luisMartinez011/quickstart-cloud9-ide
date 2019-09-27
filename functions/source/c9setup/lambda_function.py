@@ -1,9 +1,8 @@
 from __future__ import print_function
-from crhelper import CfnResource
 import logging
-import boto3
-import json
 from time import sleep
+import boto3
+from crhelper import CfnResource
 
 logger = logging.getLogger(__name__)
 helper = CfnResource(json_logging=True, log_level='DEBUG', boto_level='CRITICAL')
@@ -18,7 +17,9 @@ except Exception as e:
 
 def ssm_ready(instance_id):
     try:
-        response = ssm_client.describe_instance_information(Filters=[{'Key': 'InstanceIds', 'Values': [instance_id]}])
+        response = ssm_client.describe_instance_information(Filters=[
+            {'Key': 'InstanceIds', 'Values': [instance_id]}
+            ])
         logger.debug(response)
         return True
     except ssm_client.exceptions.InvalidInstanceId:
@@ -51,7 +52,7 @@ def create(event, context):
     instance_id = response['Reservations'][0]['Instances'][0]['InstanceId']
     ec2_client.associate_iam_instance_profile(
         IamInstanceProfile={'Name': event['ResourceProperties']['InstanceProfile']},
-        InstanceId=instance_id)    
+        InstanceId=instance_id)
     while not ssm_ready(instance_id):
         retries -= 1
         if retries == 0:
@@ -66,14 +67,16 @@ def poll_create(event, context):
         'Name': 'tag:aws:cloud9:environment', 'Values': [event['ResourceProperties']['Cloud9Environment']]
     }])
     instance_id = instance_response['Reservations'][0]['Instances'][0]['InstanceId']
+    region = event['ResourceProperties']['Region']
     bootstrap_path = event['ResourceProperties']['BootstrapPath']
     ssm_param_response = ssm_client.get_parameter(Name=event['ResourceProperties']['SSMParamStore'])
     size = ssm_param_response['Parameter']['Value']
     retries = 6
     while True:
-        commands = ['mkdir -p /tmp/bootstrap', 'cd /tmp/bootstrap',
-                    'aws s3 cp ' + bootstrap_path + ' ./bootstrap.sh --quiet',
-                    'chmod +x ./bootstrap.sh', './bootstrap.sh ' + size]
+        commands = ['mkdir -p /tmp/setup', 'cd /tmp/setup',
+                    'aws configure set region ' + region,
+                    'aws s3 cp ' + bootstrap_path + ' bootstrap.sh --quiet',
+                    'sudo chmod +x bootstrap.sh', './bootstrap.sh ' + size]
         send_response = send_command(instance_id, commands)
         if send_response:
             break
@@ -85,12 +88,13 @@ def poll_create(event, context):
     while True:
         try:
             cmd_output_response = get_command_output(instance_id, send_response['Command']['CommandId'])
-            break
+            if cmd_output_response:
+                break
         except ssm_client.exceptions.InvocationDoesNotExist:
             logger.debug('Invocation not available in SSM yet', exc_info=True)
         retries -= 1
         if retries == 0:
-            raise Exception("Timed out waiting for SSM command to complete")
+            return
         sleep(15)
     if cmd_output_response['StandardErrorContent']:
         raise Exception("ssm command failed: " + cmd_output_response['StandardErrorContent'][:235])

@@ -92,7 +92,7 @@ Resources:
     Type: AWS::SSM::Parameter
     Properties:
       Name: !Ref AWS::StackName
-      Description: !Sub ${AWS::AccountId}-${AWS::Region}-${AWS::StackName}
+      Description: !Sub '${AWS::AccountId}-${AWS::Region}-${AWS::StackName}'
       Type: String
       Value: !Ref EBSVolumeSize
   Cloud9Env:
@@ -100,7 +100,7 @@ Resources:
     Type: AWS::Cloud9::EnvironmentEC2
     Properties:
       Name: !Ref AWS::StackName
-      Description: !Sub ${AWS::AccountId}-${AWS::Region}-${AWS::StackName}
+      Description: !Sub '${AWS::AccountId}-${AWS::Region}-${AWS::StackName}'
       AutomaticStopTimeMinutes: !Ref C9StopTime
       InstanceType: !Ref C9InstanceType
       SubnetId: !Ref C9Subnet
@@ -114,22 +114,37 @@ Resources:
           Principal:
             Service: ec2.amazonaws.com
           Action: sts:AssumeRole
-      Path: /
       ManagedPolicyArns:
-      - arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM
+      - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Path: /
+      Policies:
+      - PolicyName: get-bootstrap
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action: s3:GetObject
+              Resource: !Sub 'arn:aws:s3:::${QSS3BucketName}/${QSS3KeyPrefix}*'
+      - PolicyName: describe-ec2
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action: [ "ec2:DescribeInstances", "ec2:DescribeVolumes", "ec2:ModifyVolume" ]
+              Resource: '*'       
   Cloud9InstanceProfile:
     Type: AWS::IAM::InstanceProfile
     Properties:
-      Roles:
-      - !Ref Cloud9Role
+      Roles: [!Ref Cloud9Role]
   C9Setup:
     Type: Custom::AttachRoleC9
     Properties:
-      ServiceToken: !GetAtt C9SetupLambda.Arn
+      ServiceToken: !GetAtt 'C9SetupLambda.Arn'
       InstanceProfile: !Ref Cloud9InstanceProfile
       Cloud9Environment: !Ref Cloud9Env
-      BootstrapPath: !Sub s3://${QSS3BucketName}/${QSS3KeyPrefix}scripts/bootstrap.sh
+      BootstrapPath: !Sub 's3://${QSS3BucketName}/${QSS3KeyPrefix}scripts/bootstrap.sh'
       SSMParamStore: !Ref SSMParamStore
+      Region: !Sub '${AWS::Region}'
   C9SetupRole:
     Type: AWS::IAM::Role
     Properties:
@@ -165,18 +180,12 @@ Resources:
             Resource: '*'
           - Effect: Allow
             Action: iam:PassRole
-            Resource: !GetAtt Cloud9Role.Arn
+            Resource: !GetAtt 'Cloud9Role.Arn'
           - Effect: Allow
-            Action:
-            - lambda:AddPermission
-            - lambda:RemovePermission
+            Action: [ "lambda:AddPermission", "lambda:RemovePermission" ]
             Resource: '*'
           - Effect: Allow
-            Action:
-            - events:PutRule
-            - events:DeleteRule
-            - events:PutTargets
-            - events:RemoveTargets
+            Action: [ "events:PutRule", "events:DeleteRule", "events:PutTargets", "events:RemoveTargets" ]
             Resource: '*'
   C9SetupLambda:
     DependsOn: CopyZips
@@ -185,11 +194,11 @@ Resources:
       Description: Associates a given instance profile with a given Cloud9 environment
       Handler: lambda_function.handler
       Runtime: python3.6
-      Role: !GetAtt C9SetupRole.Arn
+      Role: !GetAtt 'C9SetupRole.Arn'
       Timeout: 900
       Code:
         S3Bucket: !Ref 'LambdaZipsBucket'
-        S3Key: !Sub ${QSS3KeyPrefix}functions/packages/c9setup/lambda.zip
+        S3Key: !Sub '${QSS3KeyPrefix}functions/packages/c9setup/lambda.zip'
   CopyZipsRole:
     Type: AWS::IAM::Role
     Properties:
@@ -210,10 +219,10 @@ Resources:
           Statement:
             - Effect: Allow
               Action: s3:GetObject
-              Resource: !Sub arn:aws:s3:::${QSS3BucketName}/${QSS3KeyPrefix}*
+              Resource: !Sub 'arn:aws:s3:::${QSS3BucketName}/${QSS3KeyPrefix}*'
             - Effect: Allow
               Action: [ "s3:PutObject", "s3:DeleteObject" ]
-              Resource: !Sub arn:aws:s3:::${LambdaZipsBucket}/${QSS3KeyPrefix}*
+              Resource: !Sub 'arn:aws:s3:::${LambdaZipsBucket}/${QSS3KeyPrefix}*'
   CopyZipsFunction:
     Type: AWS::Lambda::Function
     Properties:
@@ -288,7 +297,7 @@ Resources:
   CopyZips:
     Type: Custom::CopyZips
     Properties:
-      ServiceToken: !GetAtt CopyZipsFunction.Arn
+      ServiceToken: !GetAtt 'CopyZipsFunction.Arn'
       DestBucket: !Ref 'LambdaZipsBucket'
       SourceBucket: !Ref QSS3BucketName
       Prefix: !Ref QSS3KeyPrefix

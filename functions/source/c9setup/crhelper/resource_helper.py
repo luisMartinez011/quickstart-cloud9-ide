@@ -1,13 +1,13 @@
 from __future__ import print_function
 import threading
-from crhelper.utils import _send_response
-from crhelper import log_helper
 import logging
 import random
-import boto3
 import string
 import json
 import os
+import boto3
+from crhelper import log_helper
+from crhelper.utils import _send_response
 
 logger = logging.getLogger(__name__)
 
@@ -91,8 +91,8 @@ class CfnResource(object):
             if self._send_response:
                 # Use existing PhysicalResourceId if it's in the event and no ID was set
                 if not self.PhysicalResourceId and "PhysicalResourceId" in event.keys():
-                        logger.info("PhysicalResourceId present in event, Using that for response")
-                        self.PhysicalResourceId = event['PhysicalResourceId']
+                    logger.info("PhysicalResourceId present in event, Using that for response")
+                    self.PhysicalResourceId = event['PhysicalResourceId']
                 # Generate a physical id if none is provided
                 elif not self.PhysicalResourceId or self.PhysicalResourceId is True:
                     if "PhysicalResourceId" in event.keys():

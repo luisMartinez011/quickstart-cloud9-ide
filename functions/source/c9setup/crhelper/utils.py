@@ -1,7 +1,7 @@
 from __future__ import print_function
-from botocore.vendored import requests
 import json
 import logging as logging
+from botocore.vendored import requests
 
 logger = logging.getLogger(__name__)
 
@@ -22,4 +22,4 @@ def _send_response(response_url, response_body):
         logger.info("CloudFormation returned status code: {}".format(response.reason))
     except Exception as e:
         logger.error("Unexpected failure sending response to CloudFormation {}".format(e), exc_info=True)
-
+        
