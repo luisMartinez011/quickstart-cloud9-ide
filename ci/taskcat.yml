@@ -11,6 +11,7 @@ global:
     - eu-central-1
     - eu-west-1
   reporting: true
+  package-lambda: true
 tests:
   c9:
     parameter_input: cloud9-ide-master.json
