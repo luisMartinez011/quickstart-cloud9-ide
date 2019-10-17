@@ -1,1 +1,8 @@
 .DS_Store
+.pre-commit-config.yaml
+.gitignore
+.gitmodules
+.idea/
+ci/dev-taskcat.yml
+taskcat_outputs/
+venv/

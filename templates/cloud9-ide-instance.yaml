@@ -12,27 +12,33 @@ Metadata:
       - C9StopTime
       - C9Subnet
       - EBSVolumeSize
+      - BootstrapSriptS3Uri
+      - BootstrapArguments
     - Label:
         default: AWS Quick Start Configuration
       Parameters:
-      - OutputBucketName      
+      - OutputBucketName
       - QSS3BucketName
-      - QSS3KeyPrefix   
+      - QSS3KeyPrefix
     ParameterLabels:
       C9InstanceType:
-        default: Cloud9 instance type   
+        default: Cloud9 instance type
       C9StopTime:
-        default: Stop time  
+        default: Stop time
       C9Subnet:
         default: Public Subnet ID
       EBSVolumeSize:
-        default: EBS Volume Size        
+        default: EBS Volume Size
+      BootstrapSriptS3Uri:
+        default: Bootstrap script S3 URI
+      BootstrapArguments:
+        default: Bootstrap script arguments
       OutputBucketName:
-        default: Output S3 Bucket Name                      
+        default: Output S3 Bucket Name
       QSS3BucketName:
         default: Quick Start S3 Bucket Name
       QSS3KeyPrefix:
-        default: Quick Start S3 Key Prefix     
+        default: Quick Start S3 Key Prefix
 Parameters:
   C9InstanceType:
     Description: The instance type of the new Amazon EC2 instance that AWS Cloud9
@@ -65,16 +71,24 @@ Parameters:
     Default: 30
   C9Subnet:
     Description: The ID of the public subnet where your Cloud9 IDE will be installed.
-    Type: String   
+    Type: String
   EBSVolumeSize:
     Description: The desired size (GB) of the EBS volume for your Cloud9 IDE.
     Type: Number
     Default: 100
+  BootstrapSriptS3Uri:
+    Description: S3 uri to a shell script that will be executed on the Cloud9 Instance. If left blank no custom bootstrap will be run.
+    Type: String
+    Default: ""
+  BootstrapArguments:
+    Description: Arguments string to pass to the bootstrap script.
+    Type: String
+    Default: ""
   OutputBucketName:
     Description: 'OPTIONAL: Bucket Name where the zip file output should be placed,
       if left blank a bucket name will be automatically generated.'
     Type: String
-    Default: ''         
+    Default: ''
   QSS3BucketName:
     AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
     ConstraintDescription: Quick Start bucket name can include numbers, lowercase
@@ -95,36 +109,14 @@ Parameters:
       forward slash (/).
     Type: String
 Conditions:
-  AutoGenOutputBucketName: !Not
-    - !Equals
-      - !Ref 'OutputBucketName'
-      - ''      
+  CreateZipsBucket: !Equals [!Ref 'OutputBucketName', '']
+  DoCustomBootstrap: !Not [!Equals [!Ref 'BootstrapSriptS3Uri', '']]
 Resources:
-  SSMParamStore:
-    Type: AWS::SSM::Parameter
-    Properties:
-      Name: !Ref AWS::StackName
-      Description: !Sub '${AWS::AccountId}-${AWS::Region}-${AWS::StackName}'
-      Type: String
-      Value: !Ref EBSVolumeSize
-  RegistryBucket:
-    Type: AWS::S3::Bucket 
-  OutputBucket:
-    Type: AWS::S3::Bucket
-    Properties:
-      BucketName: !If
-        - AutoGenOutputBucketName
-        - !Ref 'OutputBucketName'
-        - !Ref 'AWS::NoValue'
-      VersioningConfiguration:
-        Status: Enabled
-      Tags: []        
   LambdaZipsBucket:
+    Condition: CreateZipsBucket
     Type: AWS::S3::Bucket
-    Properties:
-      Tags: []
+    Properties: {}
   Cloud9Env:
-    DependsOn: SSMParamStore
     Type: AWS::Cloud9::EnvironmentEC2
     Properties:
       Name: !Ref AWS::StackName
@@ -159,11 +151,11 @@ Resources:
           Statement:
             - Effect: Allow
               Action: [ "ec2:DescribeInstances", "ec2:DescribeVolumes", "ec2:ModifyVolume" ]
-              Resource: '*'       
+              Resource: '*'
   Cloud9InstanceProfile:
     Type: AWS::IAM::InstanceProfile
     Properties:
-      Roles: [!Ref Cloud9Role]       
+      Roles: [!Ref Cloud9Role]
   CopyZipsRole:
     Type: AWS::IAM::Role
     Properties:
@@ -187,13 +179,16 @@ Resources:
               Resource: !Sub 'arn:aws:s3:::${QSS3BucketName}/${QSS3KeyPrefix}*'
             - Effect: Allow
               Action: [ "s3:PutObject", "s3:DeleteObject" ]
-              Resource: !Sub 'arn:aws:s3:::${LambdaZipsBucket}/${QSS3KeyPrefix}*'
+              Resource:
+                "Fn::Sub":
+                - 'arn:aws:s3:::${ZipsBucket}/${QSS3KeyPrefix}*'
+                - ZipsBucket: !If [CreateZipsBucket, Ref: LambdaZipsBucket, Ref: OutputBucketName]
   CopyZipsFunction:
     Type: AWS::Lambda::Function
     Properties:
       Description: Copies objects from a source S3 bucket to a destination
       Handler: index.handler
-      Runtime: python2.7
+      Runtime: python3.6
       Role: !GetAtt CopyZipsRole.Arn
       Timeout: 240
       Code:
@@ -259,12 +254,13 @@ Resources:
     Type: Custom::CopyZips
     Properties:
       ServiceToken: !GetAtt 'CopyZipsFunction.Arn'
-      DestBucket: !Ref 'LambdaZipsBucket'
+      DestBucket: !If [CreateZipsBucket, Ref: LambdaZipsBucket, Ref: OutputBucketName]
       SourceBucket: !Ref QSS3BucketName
       Prefix: !Ref QSS3KeyPrefix
       Objects:
-      - functions/packages/c9setup/lambda.zip
-      - functions/packages/DeleteBucketContents/lambda.zip      
+      - functions/packages/c9bootstrap/lambda.zip
+      - functions/packages/c9InstanceProfile/lambda.zip
+      - functions/packages/c9DiskResize/lambda.zip
   C9SetupRole:
     Type: AWS::IAM::Role
     Properties:
@@ -285,17 +281,23 @@ Resources:
           Statement:
           - Effect: Allow
             Action:
-            - ec2:DescribeInstances
-            - ec2:AssociateIamInstanceProfile
-            - ec2:DescribeIamInstanceProfileAssociations
-            - ssm:DescribeInstanceInformation
             - cloudformation:DescribeStackResources
+            - ec2:AssociateIamInstanceProfile
             - ec2:AuthorizeSecurityGroupIngress
+            - ec2:DescribeInstances
+            - ec2:DescribeInstanceStatus
+            - ec2:DescribeInstanceAttribute
+            - ec2:DescribeIamInstanceProfileAssociations
+            - ec2:DescribeVolumes
+            - ec2:DesctibeVolumeAttribute
+            - ec2:DescribeVolumesModifications
+            - ec2:DescribeVolumeStatus
+            - ssm:DescribeInstanceInformation
+            - ec2:ModifyVolume
+            - ec2:ReplaceIamInstanceProfileAssociation
+            - ec2:ReportInstanceStatus
             - ssm:SendCommand
             - ssm:GetCommandInvocation
-            - ssm:DescribeParameters
-            - ssm:GetParameters
-            - ssm:GetParameter
             - s3:GetObject
             Resource: '*'
           - Effect: Allow
@@ -307,7 +309,7 @@ Resources:
           - Effect: Allow
             Action: [ "events:PutRule", "events:DeleteRule", "events:PutTargets", "events:RemoveTargets" ]
             Resource: '*'
-  C9SetupLambda:
+  C9InstanceProfileLambda:
     DependsOn: CopyZips
     Type: AWS::Lambda::Function
     Properties:
@@ -317,82 +319,56 @@ Resources:
       Role: !GetAtt 'C9SetupRole.Arn'
       Timeout: 900
       Code:
-        S3Bucket: !Ref 'LambdaZipsBucket'
-        S3Key: !Sub '${QSS3KeyPrefix}functions/packages/c9setup/lambda.zip'
-  C9Setup:
-    Type: Custom::AttachRoleC9
+        S3Bucket: !If [CreateZipsBucket, Ref: LambdaZipsBucket, Ref: OutputBucketName]
+        S3Key: !Sub '${QSS3KeyPrefix}functions/packages/c9InstanceProfile/lambda.zip'
+  C9InstanceProfile:
+    Type: Custom::C9InstanceProfileLambda
     Properties:
-      ServiceToken: !GetAtt 'C9SetupLambda.Arn'
+      ServiceToken: !GetAtt 'C9InstanceProfileLambda.Arn'
       InstanceProfile: !Ref Cloud9InstanceProfile
       Cloud9Environment: !Ref Cloud9Env
-      BootstrapPath: !Sub 's3://${QSS3BucketName}/${QSS3KeyPrefix}scripts/bootstrap.sh'
-      SSMParamStore: !Ref SSMParamStore
-      Region: !Sub '${AWS::Region}'   
-  DeleteBucketContentsRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: lambda.amazonaws.com
-            Action: sts:AssumeRole
-      Path: /
-      Policies:
-        - PolicyName: deletebucketcontents
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - s3:*
-                Resource:
-                  - !Sub 'arn:aws:s3:::${OutputBucket}'
-                  - !Sub 'arn:aws:s3:::${OutputBucket}/*'
-                  - !Sub 'arn:aws:s3:::${RegistryBucket}'
-                  - !Sub 'arn:aws:s3:::${RegistryBucket}/*'
-              - Effect: Allow
-                Action:
-                  - logs:CreateLogGroup
-                  - logs:CreateLogStream
-                  - logs:PutLogEvents
-                Resource:
-                  - arn:aws:logs:*:*:*           
-  DeleteBucketContentsLambda:
-    DependsOn: C9Setup
+  C9DiskResizeLambda:
+    DependsOn: CopyZips
     Type: AWS::Lambda::Function
     Properties:
-      Handler: lambda_function.lambda_handler
-      MemorySize: 128
-      Role: !GetAtt 'DeleteBucketContentsRole.Arn'
-      Runtime: python2.7
-      Timeout: 500
+      Description: Runs custom setup actions on Cloud9 environment
+      Handler: lambda_function.handler
+      Runtime: python3.6
+      Role: !GetAtt 'C9SetupRole.Arn'
+      Timeout: 900
       Code:
-        S3Bucket: !Ref 'LambdaZipsBucket'
-        S3Key: !Sub '${QSS3KeyPrefix}functions/packages/DeleteBucketContents/lambda.zip'     
-  DeleteRegistryBucketContents:
-    DependsOn: C9Setup
-    Type: Custom::DeleteBucketContents
-    Version: '1.0'
+        S3Bucket: !If [CreateZipsBucket, Ref: LambdaZipsBucket, Ref: OutputBucketName]
+        S3Key: !Sub '${QSS3KeyPrefix}functions/packages/c9DiskResize/lambda.zip'
+  C9DiskResize:
+    Type: Custom::C9DiskResizeLambda
     Properties:
-      ServiceToken: !GetAtt 'DeleteBucketContentsLambda.Arn'
-      OutputBucket: !Ref 'RegistryBucket'
-  DeleteTempBucketContents:
-    DependsOn: C9Setup
-    Type: Custom::DeleteBucketContents
-    Version: '1.0'
+      ServiceToken: !GetAtt 'C9DiskResizeLambda.Arn'
+      InstanceId: !Ref C9InstanceProfile
+      Region: !Sub '${AWS::Region}'
+      EBSVolumeSize: !Ref EBSVolumeSize
+  C9BootstrapLambda:
+    Condition: DoCustomBootstrap
+    DependsOn: CopyZips
+    Type: AWS::Lambda::Function
     Properties:
-      ServiceToken: !GetAtt 'DeleteBucketContentsLambda.Arn'
-      OutputBucket: !Ref 'OutputBucket'
+      Description: Runs custom setup actions on Cloud9 environment
+      Handler: lambda_function.handler
+      Runtime: python3.6
+      Role: !GetAtt 'C9SetupRole.Arn'
+      Timeout: 900
+      Code:
+        S3Bucket: !If [CreateZipsBucket, Ref: LambdaZipsBucket, Ref: OutputBucketName]
+        S3Key: !Sub '${QSS3KeyPrefix}functions/packages/c9bootstrap/lambda.zip'
+  C9Bootstrap:
+    Condition: DoCustomBootstrap
+    DependsOn: C9DiskResize
+    Type: Custom::C9BootstrapLambda
+    Properties:
+      ServiceToken: !GetAtt 'C9BootstrapLambda.Arn'
+      InstanceId: !Ref C9InstanceProfile
+      BootstrapPath: !Ref BootstrapSriptS3Uri
+      BootstrapArguments: !Ref BootstrapArguments
 Outputs:
-  SSMParamStoreName:
-    Description: SSM Parameter Store Name for Cloud9 Instance EBS Volume
-    Value: !Ref SSMParamStore
-  SSMParamStoreValue:
-    Description: SSM Parameter Store Value for Cloud9 Instance EBS Volume
-    Value: !GetAtt SSMParamStore.Value        
   Cloud9Env:
     Description: Cloud9 Instance Name
     Value: !Ref Cloud9Env
-...
