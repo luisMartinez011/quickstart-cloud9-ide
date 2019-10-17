@@ -34,28 +34,28 @@ def send_command(instance_id, commands):
 @helper.create
 def create(event, context):
     logger.debug("Got Create")
-    instance_id = event["ResourceProperties"]["InstanceId"]
-    size = event['ResourceProperties']['Size']
+    instance_id = event['ResourceProperties']['InstanceId']
+    instance = ec2_client.describe_instances(Filters=[{'Name': 'instance-id', 'Values': [instance_id]}])['Reservations'][0]['Instances'][0]
+    block_volume_id = instance['BlockDeviceMappings'][0]['Ebs']['VolumeId']
+    size = event['ResourceProperties']['EBSVolumeSize']
 
-    ### TODO: Do EBS volume resize
+    # Modify the size of the Cloud9 IDE EBS volume
+    ec2_client.modify_volume(VolumeId=block_volume_id,Size=int(size))
 
 
 @helper.poll_create
 def poll_create(event, context):
     logger.info("Got create poll")
-    instance_id = event["ResourceProperties"]["InstanceId"]
+    instance_id = event['ResourceProperties']['InstanceId']
+    instance = ec2_client.describe_instances(Filters=[{'Name': 'instance-id', 'Values': [instance_id]}])['Reservations'][0]['Instances'][0]
+    block_volume_id = instance['BlockDeviceMappings'][0]['Ebs']['VolumeId']
     region = event['ResourceProperties']['Region']
-    size = event['ResourceProperties']['Size']
-
-    # TODO: check if resize is complete, return if not, eg:
-    #  if ec2_client.describe_volume(Id=my_vol_id)["VolumeId"] != "COMPLETE":
-    #      return
+    size = event['ResourceProperties']['EBSVolumeSize']
 
     # executing OS filesystem resize
     while True:
         commands = ['mkdir -p /tmp/setup', 'cd /tmp/setup',
-                    'aws configure set region ' + region,
-                    ### TODO: OS Filesystem resize command here
+                    'sudo yum update -y'
                     ]
         send_response = send_command(instance_id, commands)
         if send_response:
