@@ -1,3 +1,6 @@
 #!/bin/bash
 
-# placeholder for custom bootstrap file
+# Yum Update
+sudo yum update -y
+
+# Insert custom commands below:
