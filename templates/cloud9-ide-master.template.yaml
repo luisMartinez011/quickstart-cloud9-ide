@@ -26,15 +26,15 @@ Metadata:
       - C9StopTime
       - EBSVolumeSize    
     - Label:
-        default: AWS Quick Start Configuration
+        default: AWS Quick Start configuration
       Parameters:     
       - QSS3BucketName
       - QSS3KeyPrefix          
     ParameterLabels:
       QSS3BucketName:
-        default: Quick Start S3 Bucket Name
+        default: Quick Start S3 bucket name
       QSS3KeyPrefix:
-        default: Quick Start S3 Key Prefix    
+        default: Quick Start S3 key prefix    
       AvailabilityZones:
         default: Availability Zones
       EBSVolumeSize:
@@ -46,17 +46,17 @@ Metadata:
       NumberOfAZs:
         default: Number of Availability Zones          
       PrivateSubnet1CIDR:
-        default: Private Subnet 1 CIDR
+        default: Private subnet 1 CIDR
       PrivateSubnet2CIDR:
-        default: Private Subnet 2 CIDR
+        default: Private subnet 2 CIDR
       PublicSubnet1CIDR:
-        default: Public Subnet 1 CIDR
+        default: Public subnet 1 CIDR
       PublicSubnet2CIDR:
-        default: Public Subnet 2 CIDR
+        default: Public subnet 2 CIDR
       EnableBastionStack:
-        default: Create Bastion entry point 
+        default: Bastion entry point 
       RemoteAccessCIDR:
-        default: Allowed External Access CIDR (bastion access)
+        default: Allowed external access CIDR (bastion access)
 Parameters:
   QSS3BucketName:
     AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
@@ -94,31 +94,31 @@ Parameters:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
     ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
     Default: 10.0.0.0/19
-    Description: CIDR block for private subnet 1 located in Availability Zone 1
+    Description: CIDR block for private subnet 1 located in Availability Zone 1.
     Type: String
   PrivateSubnet2CIDR:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
     ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
     Default: 10.0.32.0/19
-    Description: CIDR block for private subnet 2 located in Availability Zone 2
+    Description: CIDR block for private subnet 2 located in Availability Zone 2.
     Type: String
   PublicSubnet1CIDR:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
     ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
     Default: 10.0.128.0/20
     Description: CIDR block for the public (DMZ) subnet 1 located in Availability
-      Zone 1
+      Zone 1.
     Type: String
   PublicSubnet2CIDR:
     AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(1[6-9]|2[0-8]))$
     ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
     Default: 10.0.144.0/20
     Description: CIDR block for the public (DMZ) subnet 2 located in Availability
-      Zone 2
+      Zone 2.
     Type: String
   C9InstanceType:
     Description: The instance type of the new Amazon EC2 instance that AWS Cloud9
-      will launch for the development environment.
+      launches for the development environment.
     Type: String
     Default: t2.micro
     AllowedValues:
