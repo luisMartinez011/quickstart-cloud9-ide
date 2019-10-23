@@ -6,7 +6,7 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
     - Label:
-        default: Cloud9 Configuration
+        default: Cloud9 configuration
       Parameters:
       - C9InstanceType
       - C9StopTime
@@ -15,7 +15,7 @@ Metadata:
       - BootstrapScriptS3Uri
       - BootstrapArguments
     - Label:
-        default: AWS Quick Start Configuration
+        default: AWS Quick Start configuration
       Parameters:
       - OutputBucketName
       - QSS3BucketName
@@ -26,19 +26,19 @@ Metadata:
       C9StopTime:
         default: Stop time
       C9Subnet:
-        default: Public Subnet ID
+        default: Public subnet ID
       EBSVolumeSize:
-        default: EBS Volume Size
+        default: EBS volume size
       BootstrapScriptS3Uri:
         default: Bootstrap script S3 URI
       BootstrapArguments:
         default: Bootstrap script arguments
       OutputBucketName:
-        default: Output S3 Bucket Name
+        default: Output S3 bucket name
       QSS3BucketName:
-        default: Quick Start S3 Bucket Name
+        default: Quick Start S3 bucket name
       QSS3KeyPrefix:
-        default: Quick Start S3 Key Prefix
+        default: Quick Start S3 key prefix
 Parameters:
   C9InstanceType:
     Description: The instance type of the new Amazon EC2 instance that AWS Cloud9
@@ -73,11 +73,11 @@ Parameters:
     Description: The ID of the public subnet where your Cloud9 IDE will be installed.
     Type: String
   EBSVolumeSize:
-    Description: The desired size (GB) of the EBS volume for your Cloud9 IDE.
+    Description: The desired size (GB) of the Amazon EBS volume for your Cloud9 IDE.
     Type: Number
     Default: 100
   BootstrapScriptS3Uri:
-    Description: S3 uri to a shell script that will be executed on the Cloud9 Instance. If left blank no custom bootstrap will be run.
+    Description: S3 URI to a shell script that will be executed on the Cloud9 instance. If left blank, no custom bootstrap will be run.
     Type: String
     Default: ""
   BootstrapArguments:
@@ -85,8 +85,8 @@ Parameters:
     Type: String
     Default: ""
   OutputBucketName:
-    Description: 'OPTIONAL: Bucket Name where the zip file output should be placed,
-      if left blank a bucket name will be automatically generated.'
+    Description: 'OPTIONAL: Bucket name where the zip file output should be placed.
+      If left blank, a bucket name will be automatically generated.'
     Type: String
     Default: ''
   QSS3BucketName:
