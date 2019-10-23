@@ -12,7 +12,7 @@ Metadata:
       - C9StopTime
       - C9Subnet
       - EBSVolumeSize
-      - BootstrapSriptS3Uri
+      - BootstrapScriptS3Uri
       - BootstrapArguments
     - Label:
         default: AWS Quick Start Configuration
@@ -29,7 +29,7 @@ Metadata:
         default: Public Subnet ID
       EBSVolumeSize:
         default: EBS Volume Size
-      BootstrapSriptS3Uri:
+      BootstrapScriptS3Uri:
         default: Bootstrap script S3 URI
       BootstrapArguments:
         default: Bootstrap script arguments
@@ -76,7 +76,7 @@ Parameters:
     Description: The desired size (GB) of the EBS volume for your Cloud9 IDE.
     Type: Number
     Default: 100
-  BootstrapSriptS3Uri:
+  BootstrapScriptS3Uri:
     Description: S3 uri to a shell script that will be executed on the Cloud9 Instance. If left blank no custom bootstrap will be run.
     Type: String
     Default: ""
@@ -110,7 +110,7 @@ Parameters:
     Type: String
 Conditions:
   CreateZipsBucket: !Equals [!Ref 'OutputBucketName', '']
-  DoCustomBootstrap: !Not [!Equals [!Ref 'BootstrapSriptS3Uri', '']]
+  DoCustomBootstrap: !Not [!Equals [!Ref 'BootstrapScriptS3Uri', '']]
 Resources:
   LambdaZipsBucket:
     Condition: CreateZipsBucket
@@ -366,7 +366,7 @@ Resources:
     Properties:
       ServiceToken: !GetAtt 'C9BootstrapLambda.Arn'
       InstanceId: !Ref C9InstanceProfile
-      BootstrapPath: !Ref BootstrapSriptS3Uri
+      BootstrapPath: !Ref BootstrapScriptS3Uri
       BootstrapArguments: !Ref BootstrapArguments
 Outputs:
   Cloud9Env:
