@@ -420,7 +420,7 @@ Resources:
     Properties:
       TemplateURL:
         Fn::Sub:
-          - https://${S3Bucket}.${S3Region}.amazonaws.com/${QSS3KeyPrefix}submodules/quickstart-aws-vpc/templates/aws-vpc.template
+          - https://${S3Bucket}.${S3Region}.{AWS::URLSuffix}/${QSS3KeyPrefix}submodules/quickstart-aws-vpc/templates/aws-vpc.template
           - S3Region: !Sub 's3.${AWS::Region}'
             S3Bucket: !Sub '${QSS3BucketName}-${AWS::Region}'
       Parameters:
@@ -439,7 +439,7 @@ Resources:
     Properties:
       TemplateURL:
         Fn::Sub:
-          - https://${S3Bucket}.${S3Region}.amazonaws.com/${QSS3KeyPrefix}templates/cloud9-ide-instance.yaml
+          - https://${S3Bucket}.${S3Region}.{AWS::URLSuffix}/${QSS3KeyPrefix}templates/cloud9-ide-instance.yaml
           - S3Region: !Sub 's3.${AWS::Region}'
             S3Bucket: !Sub '${QSS3BucketName}-${AWS::Region}'
       Parameters:
@@ -455,7 +455,7 @@ Resources:
     Properties:
       TemplateURL:
         Fn::Sub:
-          - https://${S3Bucket}.${S3Region}.amazonaws.com/${QSS3KeyPrefix}submodules/quickstart-linux-bastion/templates/linux-bastion.template'
+          - https://${S3Bucket}.${S3Region}.{AWS::URLSuffix}/${QSS3KeyPrefix}submodules/quickstart-linux-bastion/templates/linux-bastion.template'
           - S3Region: !Sub 's3.${AWS::Region}'
             S3Bucket: !Sub '${QSS3BucketName}-${AWS::Region}'
       Parameters:
