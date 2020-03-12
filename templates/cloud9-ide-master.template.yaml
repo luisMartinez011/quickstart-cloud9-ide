@@ -30,9 +30,9 @@ Metadata:
         Parameters:
           - QSS3BucketName
           - QSS3KeyPrefix
-          - BucketRegion
+          - QSS3BucketRegion
     ParameterLabels:
-      BucketRegion:
+      QSS3BucketRegion:
         default: Bucket Region
       QSS3BucketName:
         default: Quick Start S3 bucket name
@@ -61,7 +61,7 @@ Metadata:
       RemoteAccessCIDR:
         default: Allowed external access CIDR (bastion access)
 Parameters:
-  BucketRegion:
+  QSS3BucketRegion:
     Default: 'us-east-1'
     Description: 'Region of Staging bucket (BucketName)'
     Type: String
@@ -427,16 +427,10 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL:
-        Fn::Sub:
+        !Sub 
           - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}submodules/quickstart-aws-vpc/templates/aws-vpc.template'
-          - S3Region: !If
-              - UsingDefaultBucket
-              - !Ref AWS::Region
-              - !Ref BucketRegion
-            S3Bucket: !If
-              - UsingDefaultBucket
-              - !Sub '${QSS3BucketName}-${AWS::Region}'
-              - !Ref QSS3BucketName
+          - S3Region: !If [UsingDefaultBucket, !Sub '${AWS::Region}', !Ref QSS3BucketRegion]
+            S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
       Parameters:
         AvailabilityZones: !Join
           - ','
@@ -452,16 +446,10 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL:
-        Fn::Sub:
+        !Sub
           - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}templates/cloud9-ide-instance.yaml'
-          - S3Region: !If
-              - UsingDefaultBucket
-              - !Ref AWS::Region
-              - !Ref BucketRegion
-            S3Bucket: !If
-              - UsingDefaultBucket
-              - !Sub '${QSS3BucketName}-${AWS::Region}'
-              - !Ref QSS3BucketName
+          - S3Region: !If [UsingDefaultBucket, !Sub '${AWS::Region}', !Ref QSS3BucketRegion]
+            S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
       Parameters:
         EBSVolumeSize: !Ref EBSVolumeSize
         C9InstanceType: !Ref C9InstanceType
@@ -474,16 +462,10 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL:
-        Fn::Sub:
+        !Sub
           - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}submodules/quickstart-linux-bastion/templates/linux-bastion.template'
-          - S3Region: !If
-              - UsingDefaultBucket
-              - !Ref AWS::Region
-              - !Ref BucketRegion
-            S3Bucket: !If
-              - UsingDefaultBucket
-              - !Sub '${QSS3BucketName}-${AWS::Region}'
-              - !Ref QSS3BucketName
+          - S3Region: !If [UsingDefaultBucket, !Sub '${AWS::Region}', !Ref QSS3BucketRegion]
+            S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
       Parameters:
         BastionAMIOS: 'Amazon-Linux-HVM'
         BastionInstanceType: 't2.micro'

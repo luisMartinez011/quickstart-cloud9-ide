@@ -6,3 +6,4 @@
 ci/dev-taskcat.yml
 taskcat_outputs/
 venv/
+.taskcat/*
