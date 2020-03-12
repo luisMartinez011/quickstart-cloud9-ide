@@ -17,6 +17,7 @@ tests:
       AvailabilityZones: $[taskcat_getaz_2]
       QSS3BucketName: $[taskcat_autobucket]
       QSS3KeyPrefix: quickstart-cloud9-ide/
+      BucketRegion: $[taskcat_current_region]
       RemoteAccessCIDR: 0.0.0.0/0
     regions:
       - us-east-2
