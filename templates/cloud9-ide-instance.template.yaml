@@ -14,6 +14,7 @@ Metadata:
           - EBSVolumeSize
           - BootstrapScriptS3Uri
           - BootstrapArguments
+          - OwnerArn
       - Label:
           default: AWS Quick Start configuration
         Parameters:
@@ -140,10 +141,17 @@ Parameters:
       can include numbers, lowercase letters, uppercase letters, hyphens (-), dots(.) and
       forward slash (/).
     Type: String
+  OwnerArn:
+    Description: 
+      The Amazon Resource Name (ARN) of the environment owner. This ARN can be the ARN of any AWS Identity and Access Management (IAM) principal. 
+      If this value is not specified, the ARN defaults to this stack's creator.
+    Type: String
+    Default: ''
 Conditions:
   UsingDefaultBucket: !Equals [!Ref QSS3BucketName, 'aws-quickstart']
   CreateZipsBucket: !Equals [!Ref 'OutputBucketName', '']
   DoCustomBootstrap: !Not [!Equals [!Ref 'BootstrapScriptS3Uri', '']]
+  DoOwnerArn: !Not [!Equals [!Ref 'OwnerArn', '']]
 Resources:
   LambdaZipsBucket:
     Condition: CreateZipsBucket
@@ -157,6 +165,7 @@ Resources:
       AutomaticStopTimeMinutes: !Ref C9StopTime
       InstanceType: !Ref C9InstanceType
       SubnetId: !Ref C9Subnet
+      OwnerArn: !If [ DoOwnerArn, !Ref OwnerArn, !Ref 'AWS::NoValue']
   Cloud9Role:
     Type: AWS::IAM::Role
     Properties:
