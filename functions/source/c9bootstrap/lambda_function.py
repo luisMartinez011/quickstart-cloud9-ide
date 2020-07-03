@@ -37,8 +37,7 @@ def create(event, context):
     bootstrap_path = event['ResourceProperties']['BootstrapPath']
     arguments = event['ResourceProperties']['BootstrapArguments']
     while True:
-        commands = ['mkdir -p /tmp/setup', 'cd /tmp/setup',
-                    'aws s3 cp ' + bootstrap_path + ' bootstrap.sh --quiet',
+        commands = ['aws s3 cp ' + bootstrap_path + ' bootstrap.sh --quiet',
                     'sudo chmod +x bootstrap.sh', './bootstrap.sh ' + arguments]
         send_response = send_command(instance_id, commands)
         if send_response:
