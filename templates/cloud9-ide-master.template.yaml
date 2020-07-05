@@ -25,6 +25,7 @@ Metadata:
           - C9InstanceType
           - C9StopTime
           - EBSVolumeSize
+          - OwnerArn
       - Label:
           default: AWS Quick Start configuration
         Parameters:
@@ -203,6 +204,13 @@ Parameters:
       - 2
       - 3
       - 4
+  OwnerArn:
+    Description: 
+      The Amazon Resource Name (ARN) of the environment owner. This ARN can be the 
+      ARN of any AWS Identity and Access Management (IAM) principal. If this value 
+      is not specified, the ARN defaults to this stack's creator.
+    Type: String
+    Default: ''
 Conditions:
   UsingDefaultBucket: !Equals [!Ref QSS3BucketName, 'aws-quckstart']
   EnableBastion: !Equals
@@ -211,6 +219,7 @@ Conditions:
   AutoCIDR: !Equals
     - !Ref RemoteAccessCIDR
     - 'Auto'
+  DoOwnerArn: !Not [!Equals [!Ref 'OwnerArn', '']]
 Resources:
   GetAzs:
     Type: Custom::GetAzs
@@ -457,6 +466,7 @@ Resources:
         C9Subnet: !GetAtt 'VPCStack.Outputs.PublicSubnet1ID'
         QSS3BucketName: !Ref QSS3BucketName
         QSS3KeyPrefix: !Ref QSS3KeyPrefix
+        OwnerArn: !If [ DoOwnerArn, !Ref OwnerArn, !Ref 'AWS::NoValue']
   BastionStack:
     Condition: EnableBastion
     Type: AWS::CloudFormation::Stack
