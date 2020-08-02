@@ -477,7 +477,7 @@ Resources:
           - S3Region: !If [UsingDefaultBucket, !Sub '${AWS::Region}', !Ref QSS3BucketRegion]
             S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
       Parameters:
-        BastionAMIOS: 'Amazon-Linux-HVM'
+        BastionAMIOS: 'Amazon-Linux2-HVM'
         BastionInstanceType: 't2.micro'
         KeyPairName: !Ref CreateKeypair
         PublicSubnet1ID: !GetAtt 'VPCStack.Outputs.PublicSubnet1ID'
