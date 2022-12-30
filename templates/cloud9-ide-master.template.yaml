@@ -253,7 +253,7 @@ Resources:
     Properties:
       Description: Gets 3 availability zone names from the region the lambda is launched in.
       Handler: index.handler
-      Runtime: python3.6
+      Runtime: python3.9
       Role: !GetAtt 'GetAzsRole.Arn'
       Timeout: 300
       Code:
@@ -307,7 +307,7 @@ Resources:
     Properties:
       Description: Creates a keypair and stores private key in SSM parameter store.
       Handler: index.handler
-      Runtime: python3.6
+      Runtime: python3.9
       Role: !GetAtt 'CreateKeypairRole.Arn'
       Timeout: 300
       Code:
@@ -378,7 +378,7 @@ Resources:
     Properties:
       Description: Creates a keypair and stores private key in SSM parameter store.
       Handler: index.handler
-      Runtime: python3.6
+      Runtime: python3.9
       Role: !GetAtt 'GetIpRole.Arn'
       Timeout: 900
       Code:
